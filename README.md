@@ -51,7 +51,7 @@ la région s'affiche, l'endroit encadré.
 | **Compte à rebours à la seconde** | `hh:mm:ss`, qui sert aussi de témoin de vie |
 | **Noms français** | Pokémon *et* lieux, depuis les tables d'Alphapedia |
 | **Fiche Pokédex** | rareté, types colorés, six jauges de statistiques, capacité figée des alphas |
-| **Cartes de région** | 467 lieux repérés sur les cartes officielles, plus 49 cartes annotées par la communauté |
+| **Cartes de région** | 480 lieux repérés sur les cartes officielles, plus 49 cartes annotées par la communauté |
 | **Alphas signalés** | badge rouge, sprite cerclé de rouge, halo pulsant autour du widget |
 | **Discret** | translucide au repos, opaque au survol, ancrable au bureau ou au premier plan |
 | **Rien sur le disque** | l'état vit en mémoire ; seuls position, échelle et transparence sont retenus |
@@ -200,11 +200,23 @@ quand il y en a une, avec un bouton **←** pour revenir.
 
 | Région | Lieux repérés | Source des coordonnées |
 |---|---|---|
-| Sinnoh | 123 | `pokeplatinum` + calage affine |
-| Johto | 95 | `pokecrystal` |
-| Kanto | 83 | `pokefirered`, 3 couches Sevii |
-| Unys | 84 | guides pokebip Noir/Blanc et Noir/Blanc 2 |
+| Sinnoh | 125 | `pokeplatinum` + calage affine |
+| Johto | 103 | `pokecrystal` |
+| Unys | 86 | guides pokebip Noir/Blanc et Noir/Blanc 2 |
+| Kanto | 84 | `pokefirered`, 3 couches Sevii |
 | Hoenn | 82 | `pokeemerald` |
+
+**Les repères empruntés.** PokeMMO annonce parfois un lieu plus fin que la carte
+du monde n'en décrit : le Jardin Trophée est le jardin du Manoir, l'Espace Guide
+une salle au bout du Tunnel Bardane. D'autres n'existent tout simplement pas sur
+la carte d'origine — les routes 47-48 viennent de HeartGold, que Cristal ignore.
+Faute de repère propre, ces 13 lieux empruntent celui de leur parent : montrer
+le bon quartier vaut mieux que ne rien montrer, et l'en-tête du panneau porte de
+toute façon le nom exact annoncé. Table `PLACE_FALLBACKS` dans
+`fetch_assets.py`.
+
+Contrôlé sur les 196 lieux qu'Alphapedia annonce réellement pour ses alphas :
+**100 % ont un repère**, dans les cinq régions.
 
 ### La carte annotée du lieu
 
@@ -471,7 +483,7 @@ que des modèles 3D, `particles.pak` des effets, `atlas/` l'interface. Les
 | `sprites_big/` — images 96×96 | PokeAPI | 1,8 Mo |
 | `sprites_alpha/` — variantes à halo rouge | générées localement | 2,7 Mo |
 | `sprite_bbox*.json` — cadrage utile de chaque sprite | calculé localement | 39 Ko |
-| `regions.json` — emprise des 467 lieux | décompilations `pret` + pokebip | 31 Ko |
+| `regions.json` — emprise des 480 lieux | décompilations `pret` + pokebip | 31 Ko |
 
 ### Les noms de lieux
 

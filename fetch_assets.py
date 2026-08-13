@@ -583,6 +583,68 @@ def collect_manual_regions(table: dict, scale: int = 3) -> dict:
     return table
 
 
+# Lieux annonces plus finement que la carte du monde ne les decrit. Deux cas :
+# une sous-zone que la carte englobe dans son parent (le Jardin Trophee est le
+# jardin du Manoir), ou un lieu ajoute par un remake dont la carte d'origine
+# ignore tout (les routes 47-48 de HeartGold, absentes de Cristal).
+#
+# Faute de repere propre, on emprunte celui du parent : montrer le bon quartier
+# vaut mieux que ne rien montrer, et l'entete du panneau porte de toute facon le
+# nom exact du lieu annonce.
+PLACE_FALLBACKS = {
+    "kanto": {
+        # FireRed prefixe la sienne pour la distinguer de celle de Johto.
+        "victoryroad": "kantovictoryroad",
+    },
+    "johto": {
+        # Ajouts de HeartGold : la carte de Cristal ne les connait pas.
+        "belltower": "ecruteakcity",
+        "bellchimetrail": "ecruteakcity",
+        "route47": "cianwoodcity",
+        "route48": "cianwoodcity",
+        "cliffedgegate": "cianwoodcity",
+        "safarizone": "cianwoodcity",
+        "safarizonegate": "cianwoodcity",
+        "mtsilver": "silvercave",      # meme lieu, renomme par le remake
+    },
+    "sinnoh": {
+        "trophygarden": "pokemonmansion",   # le jardin est derriere le manoir
+        "sendoffspring": "turnbackcave",    # la grotte s'ouvre dans la source
+    },
+    "unova": {
+        # Les salles au bout du Tunnel Bardane, sous Port Yoneuve.
+        "guidancechamber": "claytunnel",
+        "ruminationfield": "claytunnel",
+    },
+}
+
+
+def apply_place_fallbacks(table: dict) -> dict:
+    """Ajoute les reperes empruntes, sans jamais ecraser un repere propre.
+
+    L'alias est pose dans la meme couche que son parent : sur Kanto, un lieu
+    des iles Sevii doit rester sur la carte des Sevii, pas sur la principale.
+    """
+    ajoutes = 0
+    for region, alias in PLACE_FALLBACKS.items():
+        info = table.get(region)
+        if not info:
+            continue
+        zones = [info] + list(info.get("layers") or [])
+        for nom, parent in alias.items():
+            if any(nom in (z.get("places") or {}) for z in zones):
+                continue                    # le lieu a deja son propre repere
+            for zone in zones:
+                places = zone.get("places")
+                if places and parent in places:
+                    places[nom] = list(places[parent])
+                    ajoutes += 1
+                    break
+    if ajoutes:
+        print(f"    {ajoutes} reperes empruntes a un lieu parent")
+    return table
+
+
 def fetch_region_maps(scale: int = 3) -> dict:
     """Telecharge et reconstitue une carte par region, avec ses coordonnees."""
     REGIONS_DIR.mkdir(exist_ok=True)
@@ -1171,7 +1233,7 @@ def main() -> int:
 
     if args.force or not REGIONS_FILE.exists():
         print("[*] Cartes de region (decompilations pret) ...")
-        regions = collect_manual_regions(fetch_region_maps())
+        regions = apply_place_fallbacks(collect_manual_regions(fetch_region_maps()))
         if regions:
             REGIONS_FILE.write_text(json.dumps(regions, ensure_ascii=False),
                                     encoding="utf-8")
