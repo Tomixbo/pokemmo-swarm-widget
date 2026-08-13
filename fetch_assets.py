@@ -333,21 +333,25 @@ def places_from_layout(text: str, ox: int, oy: int, scale: int) -> dict:
     # Toutes les couches : LAYER_MAP porte la surface, LAYER_DUNGEON les
     # grottes et interieurs (Cerulean Cave, Diglett's Cave...). Les ignorer
     # privait Kanto d'un tiers de ses lieux.
+    #
+    # Chaque couche est parcourue separement, avec sa propre numerotation de
+    # lignes. Mettre les lignes bout a bout puis retrouver y par un modulo
+    # supposait que toutes les decoupes portent autant de lignes : c'est faux,
+    # « [LAYER_COUNT] » est un marqueur de taille sans grille. La hauteur
+    # estimee tombait a 10 au lieu de 15 et repliait les cinq dernieres lignes
+    # sur les premieres — Route 12, qui occupe les lignes 7 a 11, se retrouvait
+    # etiree de la ligne 0 a la ligne 9, soit deux fois sa longueur.
     chunks = re.split(r"\[LAYER_[A-Z_]+\]", text)[1:] or [text]
-    rows = []
-    for chunk in chunks:
-        rows.extend(re.findall(r"\{([^{}]*MAPSEC[^{}]*)\}", chunk))
-    height = len(rows) // max(1, len(chunks)) or len(rows)
     boxes = {}
-    for index, row in enumerate(rows):
-        y = index % height
-        for x, cell in enumerate(t.strip() for t in row.split(",") if t.strip()):
-            if cell == "MAPSEC_NONE":
-                continue
-            name = normalize(cell.replace("MAPSEC_", "").replace("_", " "))
-            bx = boxes.setdefault(name, [x, y, x, y])
-            bx[0], bx[1] = min(bx[0], x), min(bx[1], y)
-            bx[2], bx[3] = max(bx[2], x), max(bx[3], y)
+    for chunk in chunks:
+        for y, row in enumerate(re.findall(r"\{([^{}]*MAPSEC[^{}]*)\}", chunk)):
+            for x, cell in enumerate(t.strip() for t in row.split(",") if t.strip()):
+                if cell == "MAPSEC_NONE":
+                    continue
+                name = normalize(cell.replace("MAPSEC_", "").replace("_", " "))
+                bx = boxes.setdefault(name, [x, y, x, y])
+                bx[0], bx[1] = min(bx[0], x), min(bx[1], y)
+                bx[2], bx[3] = max(bx[2], x), max(bx[3], y)
     return {name: [(b[0] + ox) * 8 * scale, (b[1] + oy) * 8 * scale,
                    (b[2] - b[0] + 1) * 8 * scale, (b[3] - b[1] + 1) * 8 * scale]
             for name, b in boxes.items()}
@@ -423,9 +427,14 @@ MANUAL_REGION_FILES = {"unys": "Unova", "unova": "Unova",
 
 # Sinnoh : la carte est fournie a la main, mais les coordonnees viennent de la
 # decompilation. La grille du jeu est projetee sur l'image par une transformation
-# affine, calee par recherche exhaustive (98 % des blocs tombent sur une route
-# ou un marqueur).
-SINNOH_FIT = {"sx": 7.2, "sy": 7.0, "ox": 2, "oy": -32, "span": 7}
+# affine, calee par recherche exhaustive.
+#
+# Le critere de calage compte la PART de chaque repere qui tombe sur un trace
+# orange, et non le simple fait qu'il en touche un : un repere pose de travers
+# effleure presque toujours la route voisine, si bien que le critere binaire
+# donnait 97 % a un calage qui ne recouvrait reellement que 44 % (Route 230
+# etait a cote de sa voie maritime). Le calage retenu recouvre 94 %.
+SINNOH_FIT = {"sx": 6.95, "sy": 6.95, "ox": 3, "oy": -37, "span": 7}
 SINNOH_SOURCE = ("pokeplatinum", "res/town_map/town_map_data.json")
 
 

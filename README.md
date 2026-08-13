@@ -587,9 +587,25 @@ sont téléchargés, assemblés, puis les emprises des lieux sont lues dans les
 données de landmarks. Hoenn a demandé trois hypothèses fausses avant de trouver
 que son tilemap est **planaire** et non des `u16` empaquetés.
 
+> Kanto ne passe pas par des landmarks mais par son **layout MAPSEC**, une
+> grille où chaque tuile porte le nom de la zone qui l'occupe : les emprises y
+> sont exactes par construction, sans calage. Encore faut-il lire la grille
+> correctement — les couches y sont mises bout à bout et `[LAYER_COUNT]`, simple
+> marqueur de taille, compte comme une découpe sans porter de ligne. Retrouver
+> la hauteur en divisant le total par le nombre de découpes donnait 10 au lieu
+> de 15 et repliait les cinq dernières lignes sur les premières.
+
 Sinnoh et Unys sont **fournies à la main** (`regions/`) : la grille de Sinnoh est
 projetée sur l'image par une transformation affine calée par recherche
 exhaustive, et Unys n'a aucune décompilation.
+
+> Le critère de calage compte la **part** de chaque repère qui tombe sur un
+> tracé, et non le simple fait qu'il en touche un. La nuance n'est pas
+> cosmétique : un repère posé de travers effleure presque toujours la route
+> voisine, si bien qu'un premier calage obtenait 97 % au critère binaire tout en
+> ne recouvrant réellement que **44 %** — Route 230 tombait à côté de sa voie
+> maritime. Le calage retenu recouvre **94 %** et ne laisse aucun repère hors
+> cadre.
 
 **Unys, via pokebip.** Chaque page de lieu du guide publie la carte de la région
 avec l'emprise du lieu **tracée en rouge sur un fond commun**. Plutôt que de
@@ -638,8 +654,9 @@ faisable mais inadaptée :
 - **Durées estimées sur le flux public.** Sans topic personnel, les décomptes
   reposent sur 25 min / 75 min plutôt que sur la date d'expiration réelle.
 - **Cartes annotées partielles** : 49 lieux, dont 6 en JPEG que Tk ne lit pas.
-- **Trois repères de Sinnoh** (Route 220, Route 221, Parc Rosa) débordent de 3 px
-  en bas de la carte.
+- **Sinnoh reste le repérage le moins précis** : faute de carte extractible, ses
+  emprises passent par une transformation affine (94 % de recouvrement), là où
+  les autres régions viennent directement des données de jeu.
 - **PWT, Pokéwood et la Réserve Naturelle** n'ont pas de repère sur Unys : ce
   sont des installations sans spawn sauvage.
 

@@ -4,6 +4,210 @@
   "width": 504,
   "height": 432,
   "places": {
+   "celadoncity": [
+    288,
+    192,
+    24,
+    24
+   ],
+   "ceruleancave": [
+    360,
+    120,
+    24,
+    24
+   ],
+   "ceruleancity": [
+    360,
+    120,
+    24,
+    24
+   ],
+   "cinnabarisland": [
+    120,
+    384,
+    24,
+    24
+   ],
+   "diglettscave": [
+    120,
+    168,
+    288,
+    120
+   ],
+   "fuchsiacity": [
+    312,
+    336,
+    24,
+    24
+   ],
+   "indigoplateau": [
+    72,
+    120,
+    24,
+    24
+   ],
+   "kantosafarizone": [
+    312,
+    336,
+    24,
+    24
+   ],
+   "kantovictoryroad": [
+    72,
+    144,
+    24,
+    24
+   ],
+   "lavendertown": [
+    456,
+    192,
+    24,
+    24
+   ],
+   "mtmoon": [
+    240,
+    120,
+    24,
+    24
+   ],
+   "pallettown": [
+    120,
+    312,
+    24,
+    24
+   ],
+   "pewtercity": [
+    120,
+    144,
+    24,
+    24
+   ],
+   "pokemonmansion": [
+    120,
+    384,
+    24,
+    24
+   ],
+   "pokemontower": [
+    456,
+    192,
+    24,
+    24
+   ],
+   "powerplant": [
+    456,
+    144,
+    24,
+    24
+   ],
+   "rocktunnel": [
+    456,
+    120,
+    24,
+    24
+   ],
+   "route1": [
+    120,
+    264,
+    24,
+    48
+   ],
+   "route10": [
+    456,
+    144,
+    24,
+    48
+   ],
+   "route10pokecenter": [
+    456,
+    120,
+    24,
+    24
+   ],
+   "route11": [
+    384,
+    264,
+    72,
+    24
+   ],
+   "route12": [
+    456,
+    216,
+    24,
+    120
+   ],
+   "route13": [
+    408,
+    312,
+    48,
+    24
+   ],
+   "route14": [
+    384,
+    312,
+    24,
+    48
+   ],
+   "route15": [
+    336,
+    336,
+    48,
+    24
+   ],
+   "route16": [
+    192,
+    192,
+    96,
+    24
+   ],
+   "route17": [
+    192,
+    216,
+    24,
+    120
+   ],
+   "route18": [
+    192,
+    336,
+    120,
+    24
+   ],
+   "route19": [
+    312,
+    360,
+    24,
+    48
+   ],
+   "route2": [
+    120,
+    168,
+    24,
+    72
+   ],
+   "route20": [
+    144,
+    384,
+    168,
+    24
+   ],
+   "route21": [
+    120,
+    336,
+    24,
+    48
+   ],
+   "route22": [
+    72,
+    240,
+    48,
+    24
+   ],
+   "route23": [
+    72,
+    144,
+    24,
+    96
+   ],
    "route24": [
     360,
     72,
@@ -16,16 +220,10 @@
     48,
     24
    ],
-   "indigoplateau": [
-    72,
-    120,
-    24,
-    24
-   ],
-   "route4pokecenter": [
-    216,
-    120,
-    24,
+   "route3": [
+    144,
+    144,
+    96,
     24
    ],
    "route4": [
@@ -34,40 +232,10 @@
     120,
     24
    ],
-   "ceruleancity": [
-    360,
+   "route4pokecenter": [
+    216,
     120,
     24,
-    24
-   ],
-   "route9": [
-    384,
-    120,
-    72,
-    24
-   ],
-   "route10pokecenter": [
-    456,
-    120,
-    24,
-    24
-   ],
-   "route23": [
-    72,
-    144,
-    24,
-    96
-   ],
-   "pewtercity": [
-    120,
-    144,
-    24,
-    24
-   ],
-   "route3": [
-    144,
-    144,
-    96,
     24
    ],
    "route5": [
@@ -76,40 +244,16 @@
     24,
     48
    ],
-   "route10": [
-    456,
-    144,
+   "route6": [
+    360,
+    216,
     24,
     48
-   ],
-   "route2": [
-    120,
-    168,
-    24,
-    72
-   ],
-   "route16": [
-    192,
-    192,
-    96,
-    24
-   ],
-   "celadoncity": [
-    288,
-    192,
-    24,
-    24
    ],
    "route7": [
     312,
     192,
     48,
-    24
-   ],
-   "saffroncity": [
-    360,
-    192,
-    24,
     24
    ],
    "route8": [
@@ -118,34 +262,28 @@
     72,
     24
    ],
-   "lavendertown": [
-    456,
+   "route9": [
+    384,
+    120,
+    72,
+    24
+   ],
+   "saffroncity": [
+    360,
     192,
     24,
     24
    ],
-   "route17": [
-    192,
-    48,
-    24,
-    240
-   ],
-   "route6": [
-    360,
+   "seafoamislands": [
     216,
+    384,
     24,
-    48
+    24
    ],
-   "route12": [
-    456,
-    48,
+   "vermilioncity": [
+    360,
+    264,
     24,
-    240
-   ],
-   "route22": [
-    72,
-    240,
-    48,
     24
    ],
    "viridiancity": [
@@ -154,147 +292,9 @@
     24,
     24
    ],
-   "route1": [
-    120,
-    48,
-    24,
-    240
-   ],
-   "vermilioncity": [
-    360,
-    264,
-    24,
-    24
-   ],
-   "route11": [
-    384,
-    264,
-    72,
-    24
-   ],
-   "pallettown": [
-    120,
-    72,
-    24,
-    24
-   ],
-   "route14": [
-    384,
-    72,
-    24,
-    48
-   ],
-   "route13": [
-    408,
-    72,
-    48,
-    24
-   ],
-   "route21": [
-    120,
-    96,
-    24,
-    48
-   ],
-   "route18": [
-    192,
-    96,
-    120,
-    24
-   ],
-   "fuchsiacity": [
-    312,
-    96,
-    24,
-    24
-   ],
-   "route15": [
-    336,
-    96,
-    48,
-    24
-   ],
-   "route19": [
-    312,
-    120,
-    24,
-    48
-   ],
-   "cinnabarisland": [
-    120,
-    144,
-    24,
-    24
-   ],
-   "route20": [
-    144,
-    144,
-    168,
-    24
-   ],
-   "mtmoon": [
-    240,
-    240,
-    24,
-    24
-   ],
-   "ceruleancave": [
-    360,
-    240,
-    24,
-    24
-   ],
-   "rocktunnel": [
-    456,
-    240,
-    24,
-    24
-   ],
-   "kantovictoryroad": [
-    72,
-    264,
-    24,
-    24
-   ],
-   "powerplant": [
-    456,
-    264,
-    24,
-    24
-   ],
-   "diglettscave": [
-    120,
-    48,
-    288,
-    120
-   ],
    "viridianforest": [
     120,
-    72,
-    24,
-    24
-   ],
-   "pokemontower": [
-    456,
-    72,
-    24,
-    24
-   ],
-   "kantosafarizone": [
-    312,
-    216,
-    24,
-    24
-   ],
-   "pokemonmansion": [
-    120,
-    264,
-    24,
-    24
-   ],
-   "seafoamislands": [
-    216,
-    264,
+    192,
     24,
     24
    ]
@@ -306,11 +306,17 @@
     "width": 504,
     "height": 432,
     "places": {
-     "kindleroad": [
-      72,
-      120,
+     "berryforest": [
+      360,
+      336,
       24,
-      144
+      24
+     ],
+     "bondbridge": [
+      360,
+      336,
+      96,
+      24
      ],
      "capebrink": [
       240,
@@ -318,51 +324,45 @@
       24,
       48
      ],
+     "kindleroad": [
+      72,
+      120,
+      24,
+      144
+     ],
+     "mtember": [
+      72,
+      120,
+      24,
+      24
+     ],
      "oneisland": [
       48,
       240,
       24,
       24
      ],
-     "treasurebeach": [
-      48,
-      48,
-      24,
-      240
-     ],
-     "twoisland": [
-      240,
-      264,
-      24,
-      24
-     ],
-     "bondbridge": [
-      360,
-      96,
-      96,
-      24
-     ],
      "threeisland": [
       456,
-      96,
+      336,
       24,
       24
      ],
      "threeisleport": [
       456,
-      120,
+      360,
       48,
       24
      ],
-     "mtember": [
-      72,
-      240,
+     "treasurebeach": [
+      48,
+      264,
       24,
-      24
+      48
      ],
-     "berryforest": [
-      360,
-      216,
+     "twoisland": [
+      240,
+      264,
       24,
       24
      ]
@@ -374,11 +374,41 @@
     "width": 504,
     "height": 432,
     "places": {
+     "fiveisland": [
+      408,
+      312,
+      24,
+      24
+     ],
+     "fiveislemeadow": [
+      432,
+      312,
+      24,
+      48
+     ],
      "fourisland": [
       96,
       144,
       24,
       24
+     ],
+     "icefallcave": [
+      96,
+      144,
+      24,
+      24
+     ],
+     "lostcave": [
+      456,
+      264,
+      24,
+      24
+     ],
+     "memorialpillar": [
+      456,
+      336,
+      24,
+      72
      ],
      "navelrock": [
       264,
@@ -394,38 +424,8 @@
      ],
      "waterlabyrinth": [
       360,
-      48,
+      288,
       72,
-      24
-     ],
-     "fiveisland": [
-      408,
-      72,
-      24,
-      24
-     ],
-     "fiveislemeadow": [
-      432,
-      72,
-      24,
-      48
-     ],
-     "memorialpillar": [
-      456,
-      96,
-      24,
-      72
-     ],
-     "icefallcave": [
-      96,
-      264,
-      24,
-      24
-     ],
-     "lostcave": [
-      456,
-      144,
-      24,
       24
      ]
     }
@@ -436,45 +436,15 @@
     "width": 504,
     "height": 432,
     "places": {
-     "outcastisland": [
+     "alteringcave": [
       384,
       48,
       24,
-      72
-     ],
-     "greenpath": [
-      384,
-      120,
-      72,
       24
      ],
-     "waterpath": [
+     "birthisland": [
       456,
-      120,
-      24,
-      120
-     ],
-     "sixisland": [
-      432,
-      168,
-      24,
-      24
-     ],
-     "trainertower": [
-      144,
-      192,
-      24,
-      48
-     ],
-     "ruinvalley": [
-      408,
-      216,
-      48,
-      48
-     ],
-     "sevenisland": [
-      144,
-      240,
+      360,
       24,
       24
      ],
@@ -484,47 +454,77 @@
       24,
       24
      ],
-     "sevaultcanyon": [
-      168,
-      48,
-      24,
-      240
-     ],
-     "tanobyruins": [
-      96,
-      96,
-      168,
-      24
-     ],
-     "birthisland": [
-      456,
-      120,
-      24,
-      24
-     ],
-     "alteringcave": [
-      384,
-      168,
-      24,
-      24
-     ],
-     "patternbush": [
-      432,
+     "dottedhole": [
+      408,
       240,
       24,
       24
      ],
-     "dottedhole": [
-      408,
+     "greenpath": [
+      384,
       120,
+      72,
+      24
+     ],
+     "outcastisland": [
+      384,
+      48,
+      24,
+      72
+     ],
+     "patternbush": [
+      432,
+      120,
+      24,
+      24
+     ],
+     "ruinvalley": [
+      408,
+      216,
+      48,
+      48
+     ],
+     "sevaultcanyon": [
+      168,
+      264,
+      24,
+      72
+     ],
+     "sevenisland": [
+      144,
+      240,
+      24,
+      24
+     ],
+     "sixisland": [
+      432,
+      168,
       24,
       24
      ],
      "tanobychambers": [
       240,
-      216,
+      336,
       24,
       24
+     ],
+     "tanobyruins": [
+      96,
+      336,
+      168,
+      24
+     ],
+     "trainertower": [
+      144,
+      192,
+      24,
+      48
+     ],
+     "waterpath": [
+      456,
+      120,
+      24,
+      120
      ]
     }
    }
@@ -1613,741 +1613,741 @@
   "width": 216,
   "height": 168,
   "places": {
-   "route201": [
-    23,
-    150,
-    14,
-    7
-   ],
-   "route202": [
-    38,
-    143,
+   "acuitycavern": [
+    72,
+    11,
     7,
     7
    ],
-   "route203": [
-    45,
-    129,
-    14,
-    7
+   "acuitylakefront": [
+    65,
+    4,
+    13,
+    13
    ],
-   "oreburghgate": [
-    52,
-    129,
+   "amitysquare": [
+    100,
+    108,
     7,
     7
    ],
-   "route204": [
-    38,
-    115,
-    7,
-    14
-   ],
-   "ravagedpath": [
-    38,
-    122,
+   "battlefrontier": [
+    142,
+    46,
     7,
     7
    ],
-   "route205north": [
-    59,
-    80,
+   "battlefrontiergateway": [
+    142,
+    53,
     7,
-    7
-   ],
-   "route205cabin": [
-    45,
-    94,
-    7,
-    7
-   ],
-   "route205south": [
-    45,
-    94,
-    7,
-    21
-   ],
-   "route206": [
-    66,
-    94,
-    7,
-    28
-   ],
-   "waywardcave": [
-    66,
-    101,
-    7,
-    7
-   ],
-   "route207": [
-    66,
-    122,
-    14,
-    7
-   ],
-   "route208": [
-    88,
-    122,
-    14,
     7
    ],
    "berrymastershouse": [
-    95,
-    122,
-    7,
-    7
-   ],
-   "losttower": [
-    124,
+    93,
     115,
-    7,
-    7
-   ],
-   "route209": [
-    117,
-    115,
-    14,
-    14
-   ],
-   "route210north": [
-    110,
-    80,
-    21,
-    7
-   ],
-   "dragonmastershouse": [
-    124,
-    80,
-    7,
-    7
-   ],
-   "route210south": [
-    124,
-    87,
-    7,
-    21
-   ],
-   "route210coffeeshop": [
-    124,
-    94,
-    7,
-    7
-   ],
-   "route211": [
-    81,
-    80,
-    21,
-    7
-   ],
-   "route212north": [
-    102,
-    129,
-    7,
-    21
-   ],
-   "pokemonmansion": [
-    102,
-    136,
-    7,
-    7
-   ],
-   "route212south": [
-    102,
-    150,
-    28,
-    7
-   ],
-   "route212movetutor": [
-    117,
-    150,
-    7,
-    7
-   ],
-   "route213": [
-    146,
-    143,
-    21,
-    14
-   ],
-   "doctorfootstepshouse": [
-    146,
-    150,
-    7,
-    7
-   ],
-   "ruinmaniaccave": [
-    160,
-    108,
-    7,
-    7
-   ],
-   "route214": [
-    160,
-    108,
-    7,
-    21
-   ],
-   "route215": [
-    131,
-    94,
-    21,
-    7
-   ],
-   "route216": [
-    66,
-    52,
-    21,
-    7
-   ],
-   "route217": [
-    66,
-    24,
-    7,
-    28
-   ],
-   "route218": [
-    16,
-    129,
-    14,
-    7
-   ],
-   "route219": [
-    38,
-    157,
-    7,
-    7
-   ],
-   "route220": [
-    38,
-    164,
-    14,
-    7
-   ],
-   "route221": [
-    52,
-    164,
-    21,
-    7
-   ],
-   "palparkfrontgate": [
-    66,
-    164,
-    7,
-    7
-   ],
-   "route222": [
-    167,
-    136,
-    21,
-    7
-   ],
-   "pokemonsizejudge": [
-    182,
-    136,
-    7,
-    7
-   ],
-   "route223": [
-    189,
-    101,
-    7,
-    28
-   ],
-   "route224": [
-    196,
-    73,
-    14,
-    21
-   ],
-   "route225": [
-    138,
-    38,
-    7,
-    21
-   ],
-   "route226": [
-    153,
-    38,
-    21,
-    7
-   ],
-   "themeistershouse": [
-    167,
-    38,
-    7,
-    7
-   ],
-   "route227": [
-    167,
-    24,
-    7,
-    14
-   ],
-   "route228": [
-    174,
-    38,
-    7,
-    21
-   ],
-   "route229": [
-    174,
-    59,
-    14,
-    7
-   ],
-   "route230": [
-    153,
-    59,
-    21,
-    7
-   ],
-   "seabreakpath": [
-    203,
-    17,
-    7,
-    56
-   ],
-   "protagonistshomes": [
-    23,
-    157,
-    7,
-    7
-   ],
-   "twinleaftown": [
-    23,
-    157,
-    7,
-    7
-   ],
-   "profrowanslab": [
-    38,
-    150,
-    7,
-    7
-   ],
-   "sandgemtown": [
-    38,
-    150,
-    7,
-    7
-   ],
-   "floaromameadow": [
-    38,
-    101,
-    7,
-    7
-   ],
-   "floaromatown": [
-    38,
-    101,
-    7,
-    14
-   ],
-   "flowershop": [
-    38,
-    108,
-    7,
-    7
-   ],
-   "pokemondaycare": [
-    124,
-    108,
-    7,
-    7
-   ],
-   "solaceontown": [
-    124,
-    108,
-    14,
-    7
-   ],
-   "solaceonruins": [
-    131,
-    108,
-    7,
-    7
-   ],
-   "celestictownshrine": [
-    102,
-    80,
-    7,
-    7
-   ],
-   "celestictown": [
-    102,
-    80,
-    7,
-    7
-   ],
-   "survivalarea": [
-    146,
-    38,
-    7,
-    7
-   ],
-   "resortarea": [
-    182,
-    66,
-    7,
-    7
-   ],
-   "poketchcompany": [
-    30,
-    129,
-    7,
-    7
-   ],
-   "jubilifecity": [
-    30,
-    129,
-    14,
-    14
-   ],
-   "jubilifetv": [
-    38,
-    129,
-    7,
-    7
-   ],
-   "globalterminal": [
-    30,
-    136,
-    7,
-    7
-   ],
-   "trainersschool": [
-    38,
-    136,
-    7,
-    7
-   ],
-   "canalavelibraryandgym": [
-    9,
-    122,
     7,
     7
    ],
    "canalavecity": [
     9,
-    122,
+    115,
     7,
-    14
+    13
+   ],
+   "canalavelibraryandgym": [
+    9,
+    115,
+    7,
+    7
    ],
    "canalavepiers": [
     9,
-    129,
+    122,
     7,
     7
    ],
-   "oreburghgym": [
-    59,
-    129,
+   "celestictown": [
+    100,
+    74,
     7,
     7
    ],
-   "oreburghcity": [
-    59,
-    129,
-    14,
-    14
-   ],
-   "oreburghmuseum": [
-    66,
-    129,
-    7,
-    7
-   ],
-   "oreburghmine": [
-    66,
-    136,
+   "celestictownshrine": [
+    100,
+    74,
     7,
     7
    ],
    "cycleshop": [
-    66,
-    80,
-    7,
-    7
-   ],
-   "eterniacity": [
-    66,
-    80,
-    14,
-    14
-   ],
-   "eternastatue": [
+    65,
     74,
-    80,
-    7,
-    7
-   ],
-   "eternagym": [
-    66,
-    87,
-    7,
-    7
-   ],
-   "amitysquare": [
-    102,
-    115,
-    7,
-    7
-   ],
-   "hearthomecity": [
-    102,
-    115,
-    14,
-    14
-   ],
-   "hearthomecontesthallandgym": [
-    110,
-    115,
-    7,
-    7
-   ],
-   "landmark36": [
-    102,
-    122,
-    7,
-    7
-   ],
-   "pokemonfanclub": [
-    110,
-    122,
-    7,
-    7
-   ],
-   "pastoriagym": [
-    131,
-    143,
-    7,
-    7
-   ],
-   "pastoriacity": [
-    131,
-    143,
-    14,
-    14
-   ],
-   "greatmarsh": [
-    138,
-    143,
     7,
     7
    ],
    "departmentstore": [
-    153,
-    94,
+    148,
+    88,
     7,
     7
    ],
-   "veilstonecity": [
-    153,
-    94,
-    14,
-    14
-   ],
-   "teamgalactichq": [
-    160,
-    94,
-    7,
-    7
-   ],
-   "veilstonegym": [
-    153,
-    101,
-    7,
-    7
-   ],
-   "gamecorner": [
-    160,
-    101,
-    7,
-    7
-   ],
-   "sunyshoregymandbazaar": [
-    189,
-    129,
-    7,
-    7
-   ],
-   "sunyshorecity": [
-    189,
-    129,
-    14,
-    14
-   ],
-   "vistalighthouse": [
-    196,
-    136,
-    7,
-    7
-   ],
-   "snowpointtempleandgym": [
-    81,
-    10,
-    7,
-    7
-   ],
-   "snowpointcity": [
-    81,
-    10,
-    7,
-    14
-   ],
-   "pokemonleague": [
-    189,
-    87,
-    7,
-    7
-   ],
-   "victoryroad": [
-    189,
-    94,
-    7,
-    7
-   ],
-   "fightareapier": [
-    138,
-    59,
-    7,
-    7
-   ],
-   "fightarea": [
-    138,
-    59,
-    14,
-    7
-   ],
-   "battlefrontiergateway": [
-    146,
-    59,
-    7,
-    7
-   ],
-   "veritylakefront": [
-    9,
+   "doctorfootstepshouse": [
+    142,
     143,
-    14,
-    14
-   ],
-   "veritycavern": [
-    16,
-    150,
     7,
     7
    ],
-   "valorlakefront": [
-    153,
-    129,
-    14,
-    14
-   ],
-   "valorcavern": [
-    160,
-    129,
-    7,
-    7
-   ],
-   "valorlakefrontrestaurant": [
-    160,
-    136,
-    7,
-    7
-   ],
-   "acuitylakefront": [
-    66,
-    10,
-    14,
-    14
-   ],
-   "acuitycavern": [
+   "dragonmastershouse": [
+    121,
     74,
-    17,
-    7,
-    7
-   ],
-   "springpath": [
-    167,
-    115,
-    14,
-    14
-   ],
-   "turnbackcave": [
-    167,
-    122,
-    7,
-    7
-   ],
-   "valleywindworks": [
-    52,
-    108,
     7,
     7
    ],
    "eternaforest": [
-    45,
-    80,
-    14,
-    14
+    44,
+    74,
+    13,
+    13
    ],
-   "oldchateau": [
-    52,
-    80,
+   "eternagym": [
+    65,
+    81,
+    7,
+    7
+   ],
+   "eternastatue": [
+    72,
+    74,
+    7,
+    7
+   ],
+   "eterniacity": [
+    65,
+    74,
+    13,
+    13
+   ],
+   "fightarea": [
+    135,
+    53,
+    13,
+    7
+   ],
+   "fightareapier": [
+    135,
+    53,
+    7,
+    7
+   ],
+   "floaromameadow": [
+    37,
+    95,
+    7,
+    7
+   ],
+   "floaromatown": [
+    37,
+    95,
+    7,
+    13
+   ],
+   "flowerparadise": [
+    197,
+    4,
+    7,
+    7
+   ],
+   "flowershop": [
+    37,
+    102,
     7,
     7
    ],
    "fuegoironworks": [
-    38,
-    94,
-    7,
-    7
-   ],
-   "mountcoronet": [
-    81,
-    52,
-    14,
-    77
-   ],
-   "spearpillar": [
-    81,
-    101,
+    37,
+    88,
     7,
     7
    ],
    "fullmoonisland": [
     9,
-    24,
+    18,
     7,
     7
    ],
-   "starkmountain": [
-    167,
-    17,
+   "gamecorner": [
+    155,
+    95,
     7,
     7
    ],
-   "flowerparadise": [
-    203,
-    10,
+   "globalterminal": [
+    30,
+    129,
+    7,
+    7
+   ],
+   "greatmarsh": [
+    135,
+    136,
+    7,
+    7
+   ],
+   "hearthomecity": [
+    100,
+    108,
+    13,
+    13
+   ],
+   "hearthomecontesthallandgym": [
+    107,
+    108,
     7,
     7
    ],
    "ironisland": [
     23,
-    73,
+    67,
     7,
     7
+   ],
+   "jubilifecity": [
+    30,
+    122,
+    13,
+    13
+   ],
+   "jubilifetv": [
+    37,
+    122,
+    7,
+    7
+   ],
+   "landmark36": [
+    100,
+    115,
+    7,
+    7
+   ],
+   "losttower": [
+    121,
+    108,
+    7,
+    7
+   ],
+   "mountcoronet": [
+    79,
+    46,
+    13,
+    76
    ],
    "newmoonisland": [
     30,
-    24,
+    18,
     7,
     7
    ],
-   "battlefrontier": [
-    146,
-    52,
+   "oldchateau": [
+    51,
+    74,
+    7,
+    7
+   ],
+   "oreburghcity": [
+    58,
+    122,
+    13,
+    13
+   ],
+   "oreburghgate": [
+    51,
+    122,
+    7,
+    7
+   ],
+   "oreburghgym": [
+    58,
+    122,
+    7,
+    7
+   ],
+   "oreburghmine": [
+    65,
+    129,
+    7,
+    7
+   ],
+   "oreburghmuseum": [
+    65,
+    122,
+    7,
+    7
+   ],
+   "palparkfrontgate": [
+    65,
+    157,
+    7,
+    7
+   ],
+   "pastoriacity": [
+    128,
+    136,
+    13,
+    13
+   ],
+   "pastoriagym": [
+    128,
+    136,
+    7,
+    7
+   ],
+   "pokemondaycare": [
+    121,
+    102,
+    7,
+    7
+   ],
+   "pokemonfanclub": [
+    107,
+    115,
+    7,
+    7
+   ],
+   "pokemonleague": [
+    183,
+    81,
+    7,
+    7
+   ],
+   "pokemonmansion": [
+    100,
+    129,
+    7,
+    7
+   ],
+   "pokemonsizejudge": [
+    176,
+    129,
+    7,
+    7
+   ],
+   "poketchcompany": [
+    30,
+    122,
+    7,
+    7
+   ],
+   "profrowanslab": [
+    37,
+    143,
+    7,
+    7
+   ],
+   "protagonistshomes": [
+    23,
+    150,
+    7,
+    7
+   ],
+   "ravagedpath": [
+    37,
+    115,
+    7,
+    7
+   ],
+   "resortarea": [
+    176,
+    60,
+    7,
+    7
+   ],
+   "route201": [
+    23,
+    143,
+    13,
+    7
+   ],
+   "route202": [
+    37,
+    136,
+    7,
+    7
+   ],
+   "route203": [
+    44,
+    122,
+    13,
+    7
+   ],
+   "route204": [
+    37,
+    108,
+    7,
+    13
+   ],
+   "route205cabin": [
+    44,
+    88,
+    7,
+    7
+   ],
+   "route205north": [
+    58,
+    74,
+    7,
+    7
+   ],
+   "route205south": [
+    44,
+    88,
+    7,
+    20
+   ],
+   "route206": [
+    65,
+    88,
+    7,
+    27
+   ],
+   "route207": [
+    65,
+    115,
+    13,
+    7
+   ],
+   "route208": [
+    86,
+    115,
+    13,
+    7
+   ],
+   "route209": [
+    114,
+    108,
+    13,
+    13
+   ],
+   "route210coffeeshop": [
+    121,
+    88,
+    7,
+    7
+   ],
+   "route210north": [
+    107,
+    74,
+    20,
+    7
+   ],
+   "route210south": [
+    121,
+    81,
+    7,
+    20
+   ],
+   "route211": [
+    79,
+    74,
+    20,
+    7
+   ],
+   "route212movetutor": [
+    114,
+    143,
+    7,
+    7
+   ],
+   "route212north": [
+    100,
+    122,
+    7,
+    20
+   ],
+   "route212south": [
+    100,
+    143,
+    27,
+    7
+   ],
+   "route213": [
+    142,
+    136,
+    20,
+    13
+   ],
+   "route214": [
+    155,
+    102,
+    7,
+    20
+   ],
+   "route215": [
+    128,
+    88,
+    20,
+    7
+   ],
+   "route216": [
+    65,
+    46,
+    20,
+    7
+   ],
+   "route217": [
+    65,
+    18,
+    7,
+    27
+   ],
+   "route218": [
+    16,
+    122,
+    13,
+    7
+   ],
+   "route219": [
+    37,
+    150,
+    7,
+    7
+   ],
+   "route220": [
+    37,
+    157,
+    13,
+    7
+   ],
+   "route221": [
+    51,
+    157,
+    20,
+    7
+   ],
+   "route222": [
+    162,
+    129,
+    20,
+    7
+   ],
+   "route223": [
+    183,
+    95,
+    7,
+    27
+   ],
+   "route224": [
+    190,
+    67,
+    13,
+    20
+   ],
+   "route225": [
+    135,
+    32,
+    7,
+    20
+   ],
+   "route226": [
+    148,
+    32,
+    20,
+    7
+   ],
+   "route227": [
+    162,
+    18,
+    7,
+    13
+   ],
+   "route228": [
+    169,
+    32,
+    7,
+    20
+   ],
+   "route229": [
+    169,
+    53,
+    13,
+    7
+   ],
+   "route230": [
+    148,
+    53,
+    20,
+    7
+   ],
+   "ruinmaniaccave": [
+    155,
+    102,
+    7,
+    7
+   ],
+   "sandgemtown": [
+    37,
+    143,
+    7,
+    7
+   ],
+   "seabreakpath": [
+    197,
+    11,
+    7,
+    55
+   ],
+   "snowpointcity": [
+    79,
+    4,
+    7,
+    13
+   ],
+   "snowpointtempleandgym": [
+    79,
+    4,
+    7,
+    7
+   ],
+   "solaceonruins": [
+    128,
+    102,
+    7,
+    7
+   ],
+   "solaceontown": [
+    121,
+    102,
+    13,
+    7
+   ],
+   "spearpillar": [
+    79,
+    95,
+    7,
+    7
+   ],
+   "springpath": [
+    162,
+    108,
+    13,
+    13
+   ],
+   "starkmountain": [
+    162,
+    11,
+    7,
+    7
+   ],
+   "sunyshorecity": [
+    183,
+    122,
+    13,
+    13
+   ],
+   "sunyshoregymandbazaar": [
+    183,
+    122,
+    7,
+    7
+   ],
+   "survivalarea": [
+    142,
+    32,
+    7,
+    7
+   ],
+   "teamgalactichq": [
+    155,
+    88,
+    7,
+    7
+   ],
+   "themeistershouse": [
+    162,
+    32,
+    7,
+    7
+   ],
+   "trainersschool": [
+    37,
+    129,
+    7,
+    7
+   ],
+   "turnbackcave": [
+    162,
+    115,
+    7,
+    7
+   ],
+   "twinleaftown": [
+    23,
+    150,
+    7,
+    7
+   ],
+   "valleywindworks": [
+    51,
+    102,
+    7,
+    7
+   ],
+   "valorcavern": [
+    155,
+    122,
+    7,
+    7
+   ],
+   "valorlakefront": [
+    148,
+    122,
+    13,
+    13
+   ],
+   "valorlakefrontrestaurant": [
+    155,
+    129,
+    7,
+    7
+   ],
+   "veilstonecity": [
+    148,
+    88,
+    13,
+    13
+   ],
+   "veilstonegym": [
+    148,
+    95,
+    7,
+    7
+   ],
+   "veritycavern": [
+    16,
+    143,
+    7,
+    7
+   ],
+   "veritylakefront": [
+    9,
+    136,
+    13,
+    13
+   ],
+   "victoryroad": [
+    183,
+    88,
+    7,
+    7
+   ],
+   "vistalighthouse": [
+    190,
+    129,
+    7,
+    7
+   ],
+   "waywardcave": [
+    65,
+    95,
     7,
     7
    ]
