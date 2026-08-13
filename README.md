@@ -673,10 +673,19 @@ faisable mais inadaptée :
 
 - **Windows uniquement.** L'icône système et l'ancrage au bureau passent par
   l'API Win32 via `ctypes`. Le reste est portable.
-- **Dépendance à des contributeurs humains.** Alphapedia est alimentée par des
-  joueurs : un essaim non signalé n'apparaîtra pas.
+- **Dépendance à des contributeurs humains.** La source première est le jeu
+  lui-même : l'essaim est annoncé dans le chat et au journal télévisé. Alphapedia
+  n'y a pas accès — un joueur doit le *signaler* sur son site ou via son bot
+  Discord. Un essaim que personne ne signale n'apparaîtra jamais, et un essaim
+  signalé tardivement arrive tardivement. Mesuré : un Aquali sur la Route 134
+  d'Hoenn, vu en jeu, a été publié une quinzaine de minutes plus tard.
+- **Le décompte part du signalement, pas de l'apparition.** Conséquence directe
+  du point précédent, et **elle vaut pour les deux flux** : `despawnTimestamp`
+  est calculé comme l'heure d'annonce + 25 min, pas comme l'heure réelle du
+  spawn. Un essaim signalé avec 15 min de retard affichera ~25 min restantes
+  alors qu'il n'en reste qu'une dizaine. Le décompte est donc un majorant.
 - **Durées estimées sur le flux public.** Sans topic personnel, les décomptes
-  reposent sur 25 min / 75 min plutôt que sur la date d'expiration réelle.
+  reposent en plus sur 25 min / 75 min faute de date d'expiration transmise.
 - **Cartes annotées partielles** : 49 lieux, dont 6 en JPEG que Tk ne lit pas.
 - **Sinnoh reste le repérage le moins précis** : faute de carte extractible, ses
   emprises passent par une transformation affine (94 % de recouvrement), là où
