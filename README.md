@@ -1,5 +1,12 @@
 # PokeMMO Swarm Widget
 
+<img src="docs/screenshot.png" alt="Le widget, la fiche Pokédex d'Altaria et la carte de Hoenn" width="660">
+
+*Deux alphas en cours — Dracolosse à Johto, Altaria à Hoenn — en rouge, d'où le
+halo qui entoure le widget ; les trois autres régions sont de simples essaims.
+À droite, la fiche d'Altaria avec son sprite auréolé, ses deux types et sa
+capacité figée. Au-dessus, la carte de Hoenn, Route 114 encadrée.*
+
 [![Licence MIT](https://img.shields.io/badge/licence-MIT-green.svg)](LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
 [![Windows](https://img.shields.io/badge/plateforme-Windows%2010%2F11-0078d4.svg)](#installation)
@@ -12,13 +19,6 @@ Un essaim dure environ 25 minutes, un alpha 75. Les repérer suppose d'ouvrir la
 carte du jeu régulièrement, donc de jouer, donc de rester connecté. Ce widget
 retire cette contrainte : il écoute les annonces de la communauté et les affiche
 dans un petit panneau toujours visible, que le jeu tourne ou non.
-
-![Le widget, la fiche Pokédex d'Altaria et la carte de Hoenn](docs/screenshot.png)
-
-*Deux alphas en cours — Dracolosse à Johto, Altaria à Hoenn — en rouge, d'où le
-halo qui entoure le widget ; les trois autres régions sont de simples essaims.
-À droite, la fiche d'Altaria avec son sprite auréolé, ses deux types et sa
-capacité figée. Au-dessus, la carte de Hoenn, Route 114 encadrée.*
 
 Survol d'un sprite : il grossit. Clic : une fiche Pokédex s'ouvre à côté —
 rareté, types, statistiques, capacité de l'alpha. Clic sur le lieu : la carte de
