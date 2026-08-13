@@ -593,8 +593,9 @@ def collect_manual_regions(table: dict, scale: int = 3) -> dict:
 # nom exact du lieu annonce.
 PLACE_FALLBACKS = {
     "kanto": {
-        # FireRed prefixe la sienne pour la distinguer de celle de Johto.
+        # FireRed prefixe les siennes pour les distinguer de celles de Johto.
         "victoryroad": "kantovictoryroad",
+        "safarizone": "kantosafarizone",
     },
     "johto": {
         # Ajouts de HeartGold : la carte de Cristal ne les connait pas.
@@ -603,13 +604,18 @@ PLACE_FALLBACKS = {
         "route47": "cianwoodcity",
         "route48": "cianwoodcity",
         "cliffedgegate": "cianwoodcity",
+        "cliffcave": "cianwoodcity",
         "safarizone": "cianwoodcity",
         "safarizonegate": "cianwoodcity",
         "mtsilver": "silvercave",      # meme lieu, renomme par le remake
+        "mtsilvercave": "silvercave",
+        "teamrockethq": "mahoganytown",  # le repaire est sous la ville
+        "teamrocketheadquarters": "mahoganytown",
     },
     "sinnoh": {
         "trophygarden": "pokemonmansion",   # le jardin est derriere le manoir
         "sendoffspring": "turnbackcave",    # la grotte s'ouvre dans la source
+        "maniactunnel": "ruinmaniaccave",   # meme galerie, renommee par Platine
     },
     "unova": {
         # Les salles au bout du Tunnel Bardane, sous Port Yoneuve.
@@ -643,6 +649,72 @@ def apply_place_fallbacks(table: dict) -> dict:
     if ajoutes:
         print(f"    {ajoutes} reperes empruntes a un lieu parent")
     return table
+
+
+def resolve_place(zones: list, key: str):
+    """Resolution d'un lieu, calquee sur _find_place() du widget.
+
+    Les deux doivent rester d'accord : ce controle ne vaut que s'il cherche
+    exactement comme le widget cherchera a l'affichage.
+    """
+    if not key:
+        return None
+    variantes = [key]
+    if key.startswith("mt"):
+        variantes.append("mount" + key[2:])
+    if key.startswith("mount"):
+        variantes.append("mt" + key[5:])
+    if key.startswith("lake"):
+        variantes.append(key[4:] + "lakefront")
+    for zone in zones:
+        places = zone.get("places") or {}
+        for variante in variantes:
+            if variante in places:
+                return places[variante]
+            proches = sorted(k for k in places if k.startswith(variante))
+            if proches:
+                return places[proches[0]]
+    return None
+
+
+def check_place_coverage(table: dict) -> int:
+    """Confronte les reperes au catalogue des spawns d'Alphapedia.
+
+    C'est le seul controle qui vaille. Le catalogue enumere exactement les
+    lieux qui peuvent etre annonces (266 couples region/lieu) ; mesurer la
+    couverture sur un sous-ensemble — les seuls spots d'alphas, par exemple —
+    donne un score flatteur et laisse passer des manques que l'utilisateur
+    finit par decouvrir a l'usage.
+
+    Rend le nombre de lieux sans repere, et les nomme : chacun appelle soit une
+    entree dans PLACE_FALLBACKS, soit une correction de la source.
+    """
+    catalogue = {}
+    for api in ("swarm-spawn-data", "alpha-spawn-data"):
+        try:
+            raw = json.loads(http_get(f"{ALPHAPEDIA}/api/{api}", 60).decode("utf-8"))
+        except Exception as exc:
+            print(f"    [!] catalogue {api} indisponible ({exc}) — controle partiel")
+            continue
+        for region, locations in raw.items():
+            catalogue.setdefault(region, set()).update(locations)
+
+    total = absents = 0
+    for region, lieux in sorted(catalogue.items()):
+        info = table.get(normalize(region))
+        if not info:
+            continue
+        zones = [info] + list(info.get("layers") or [])
+        sans = sorted(l for l in lieux if resolve_place(zones, normalize(l)) is None)
+        total += len(lieux)
+        absents += len(sans)
+        etat = f"{len(lieux) - len(sans)}/{len(lieux)}"
+        print(f"    {region:<8} {etat:>7} lieux reperes"
+              + (f"  MANQUE : {', '.join(sans)}" if sans else ""))
+    if total:
+        print(f"    couverture {total - absents}/{total} "
+              f"({(total - absents) * 100 // total} %)")
+    return absents
 
 
 def fetch_region_maps(scale: int = 3) -> dict:
@@ -1234,6 +1306,7 @@ def main() -> int:
     if args.force or not REGIONS_FILE.exists():
         print("[*] Cartes de region (decompilations pret) ...")
         regions = apply_place_fallbacks(collect_manual_regions(fetch_region_maps()))
+        check_place_coverage(regions)
         if regions:
             REGIONS_FILE.write_text(json.dumps(regions, ensure_ascii=False),
                                     encoding="utf-8")

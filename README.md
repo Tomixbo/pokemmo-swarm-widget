@@ -51,7 +51,7 @@ la région s'affiche, l'endroit encadré.
 | **Compte à rebours à la seconde** | `hh:mm:ss`, qui sert aussi de témoin de vie |
 | **Noms français** | Pokémon *et* lieux, depuis les tables d'Alphapedia |
 | **Fiche Pokédex** | rareté, types colorés, six jauges de statistiques, capacité figée des alphas |
-| **Cartes de région** | 480 lieux repérés sur les cartes officielles, plus 49 cartes annotées par la communauté |
+| **Cartes de région** | 486 lieux repérés sur les cartes officielles, plus 49 cartes annotées par la communauté |
 | **Alphas signalés** | badge rouge, sprite cerclé de rouge, halo pulsant autour du widget |
 | **Discret** | translucide au repos, opaque au survol, ancrable au bureau ou au premier plan |
 | **Rien sur le disque** | l'état vit en mémoire ; seuls position, échelle et transparence sont retenus |
@@ -200,23 +200,35 @@ quand il y en a une, avec un bouton **←** pour revenir.
 
 | Région | Lieux repérés | Source des coordonnées |
 |---|---|---|
-| Sinnoh | 125 | `pokeplatinum` + calage affine |
-| Johto | 103 | `pokecrystal` |
+| Sinnoh | 126 | `pokeplatinum` + calage affine |
+| Johto | 107 | `pokecrystal` |
 | Unys | 86 | guides pokebip Noir/Blanc et Noir/Blanc 2 |
-| Kanto | 84 | `pokefirered`, 3 couches Sevii |
+| Kanto | 85 | `pokefirered`, 3 couches Sevii |
 | Hoenn | 82 | `pokeemerald` |
 
 **Les repères empruntés.** PokeMMO annonce parfois un lieu plus fin que la carte
 du monde n'en décrit : le Jardin Trophée est le jardin du Manoir, l'Espace Guide
-une salle au bout du Tunnel Bardane. D'autres n'existent tout simplement pas sur
-la carte d'origine — les routes 47-48 viennent de HeartGold, que Cristal ignore.
-Faute de repère propre, ces 13 lieux empruntent celui de leur parent : montrer
-le bon quartier vaut mieux que ne rien montrer, et l'en-tête du panneau porte de
+une salle au bout du Tunnel Bardane, le QG de la Team Rocket un sous-sol de
+Acajou. D'autres n'existent pas sur la carte d'origine — Grotte Falaise et les
+routes 47-48 viennent de HeartGold, que Cristal ignore. D'autres encore ne
+diffèrent que par le nom : FireRed écrit `KANTO_SAFARI_ZONE`, Platine a rebaptisé
+le Tunnel Runiement.
+
+Faute de repère propre, ces lieux empruntent celui de leur parent : montrer le
+bon quartier vaut mieux que ne rien montrer, et l'en-tête du panneau porte de
 toute façon le nom exact annoncé. Table `PLACE_FALLBACKS` dans
 `fetch_assets.py`.
 
-Contrôlé sur les 196 lieux qu'Alphapedia annonce réellement pour ses alphas :
-**100 % ont un repère**, dans les cinq régions.
+**Le contrôle de couverture.** `fetch_assets.py` confronte les repères au
+catalogue des spawns d'Alphapedia (`swarm-spawn-data` et `alpha-spawn-data`),
+qui énumère exactement les **266 couples région/lieu** pouvant être annoncés, et
+nomme ce qui manque. Couverture actuelle : **266/266**.
+
+> Ce contrôle a d'abord été mesuré sur les seuls spots d'alphas — 196 lieux — ce
+> qui affichait 100 % alors que cinq lieux d'essaims restaient sans repère. Un
+> taux de couverture ne vaut que par son dénominateur. La résolution utilisée
+> par le contrôle est par ailleurs confrontée à celle du widget sur les 266
+> lieux : sans cela, il validerait une recherche que l'affichage ne fait pas.
 
 ### La carte annotée du lieu
 
@@ -483,7 +495,7 @@ que des modèles 3D, `particles.pak` des effets, `atlas/` l'interface. Les
 | `sprites_big/` — images 96×96 | PokeAPI | 1,8 Mo |
 | `sprites_alpha/` — variantes à halo rouge | générées localement | 2,7 Mo |
 | `sprite_bbox*.json` — cadrage utile de chaque sprite | calculé localement | 39 Ko |
-| `regions.json` — emprise des 480 lieux | décompilations `pret` + pokebip | 31 Ko |
+| `regions.json` — emprise des 486 lieux | décompilations `pret` + pokebip | 31 Ko |
 
 ### Les noms de lieux
 
