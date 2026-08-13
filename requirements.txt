@@ -1,0 +1,18 @@
+# PokeMMO Swarm Widget n'a aucune dependance tierce.
+#
+# Tout vient de la bibliotheque standard : tkinter pour l'interface, ctypes pour
+# l'icone de la zone de notification et l'ancrage au bureau, urllib pour les
+# flux ntfy, zlib pour le decodage PNG maison, json/re/threading pour le reste.
+# Meme le traitement d'images (rognage, halo des alphas, mise a l'echelle) est
+# ecrit a la main plutot que de dependre de Pillow.
+#
+# `pip install -r requirements.txt` ne fait donc rien, volontairement.
+# Ce fichier existe pour que la commande reste sans effet plutot qu'en erreur.
+#
+# Prerequis reels :
+#   - Windows 10 ou 11        (ctypes/Win32 : Shell_NotifyIconW, SetParent)
+#   - Python 3.10 ou plus recent (teste sur 3.14)
+#   - tkinter, inclus dans l'installeur officiel de python.org
+#
+# Verifier que tkinter est present :
+#   python -c "import tkinter; print(tkinter.TkVersion)"

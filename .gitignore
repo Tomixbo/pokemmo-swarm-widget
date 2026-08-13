@@ -1,0 +1,30 @@
+# --- Ressources telechargees par fetch_assets.py ---------------------------
+# Elles se reconstruisent en une commande et pesent bien plus que le code.
+# Les donnees derivees (JSON) sont versionnees, les images ne le sont pas.
+sprites/
+sprites_big/
+sprites_alpha/
+maps/
+
+# Cache des sources distantes (depots pret, pages pokebip).
+.pret_cache/
+
+# --- Etat local -------------------------------------------------------------
+# Position, ancrage, echelle et transparence : propre a chaque machine.
+.widget_state.json
+
+# --- Python -----------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+
+# --- Editeurs et OS ---------------------------------------------------------
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+desktop.ini
+.DS_Store

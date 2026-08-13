@@ -1,0 +1,12 @@
+# Fins de ligne normalisees en LF dans le depot : sans cela, un contributeur
+# sous Linux verrait chaque fichier comme entierement modifie.
+* text=auto eol=lf
+
+# Scripts Windows : ils doivent rester en CRLF sur le disque, cmd.exe et
+# PowerShell tolerent mal le LF seul dans certains cas.
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binaires : aucune conversion.
+*.png binary
+*.jpg binary
