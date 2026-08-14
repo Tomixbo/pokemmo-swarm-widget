@@ -1528,6 +1528,14 @@ class SwarmWidget:
                 name = tk.Label(line, text="---", bg=BG, fg=FG_EMPTY, anchor="w",
                                 font=self._font(11, "bold"))
                 name.pack(side="left")
+                # Le separateur est un widget a part. Glisse dans le libelle du
+                # nom (« Skitty  |  »), il reagissait au survol et au clic comme
+                # s'il faisait partie du nom, et son espacement dependait
+                # d'espaces noyes dans le texte. Ici padx s'applique des deux
+                # cotes : l'ecart est symetrique par construction.
+                separator = tk.Label(line, text="", bg=BG, fg=FG_EMPTY,
+                                     font=self._font(11, "bold"))
+                separator.pack(side="left", padx=int(round(6 * self.scale)))
                 where = tk.Label(line, text="", bg=BG, fg=FG_EMPTY, anchor="w",
                                  font=self._font(11, "bold"))
                 where.pack(side="left")
@@ -1551,7 +1559,7 @@ class SwarmWidget:
 
                 widgets = {"region": region, "badge": badge, "tier": tier,
                            "icon": icon, "name": name, "where": where,
-                           "timer": timer,
+                           "sep": separator, "timer": timer,
                            # Bandeau des etiquettes et ligne du nom : _render
                            # depile le premier quand la region est vide, sinon
                            # sa hauteur de ligne decalerait le « --- » vers le
@@ -1976,6 +1984,7 @@ class SwarmWidget:
                             pady=(creux // 2, creux - creux // 2) if creux > 0 else 0)
                         widgets["icon"].configure(image=self.blank)
                         widgets["name"].configure(text="---", fg=FG_EMPTY)
+                        widgets["sep"].configure(text="")
                         widgets["where"].configure(text="")
                         widgets["timer"].configure(text="")
                     else:
@@ -2028,8 +2037,11 @@ class SwarmWidget:
                 widgets["entry"] = entry
                 widgets["base_fg"] = base_fg
                 widgets["name"].configure(
-                    text=f"{self._label(entry['pokemon'])}  |  ",
+                    text=self._label(entry["pokemon"]),
                     fg=FG_HOVER if is_hovered else base_fg)
+                # Le separateur ne prend jamais la couleur de survol : il
+                # n'appartient ni au nom ni au lieu.
+                widgets["sep"].configure(text="|", fg=base_fg)
                 place_hovered = self.hovered_place == (region, slot)
                 widgets["where"].configure(
                     text=self._place_name(entry["location"]),
