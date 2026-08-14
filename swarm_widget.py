@@ -1194,8 +1194,9 @@ class SwarmWidget:
             if self.map_window is not None:
                 self.map_window.destroy()
                 self.map_window = None
-        for widget in (close, holder):
-            widget.bind("<Button-1>", dismiss)
+        # Seule la croix referme : cliquer l'image ne fait rien, comme sur la
+        # carte de region.
+        close.bind("<Button-1>", dismiss)
         close.bind("<Enter>", lambda _e: close.configure(fg=FG_VALUE))
         close.bind("<Leave>", lambda _e: close.configure(fg=FG_EMPTY))
         window.bind("<Escape>", dismiss)
@@ -1267,10 +1268,15 @@ class SwarmWidget:
             retour.bind("<Enter>", lambda _e: retour.configure(fg=FG_HOVER))
             retour.bind("<Leave>", lambda _e: retour.configure(fg=FG_LINK))
         ctx = self._map_context
-        zoom.bind("<Button-1>", lambda _e: self._open_map_panel(
-            path, region_label, place_label, spot, not enlarged,
-            detail=ctx["detail"], back=ctx["back"],
-            region=ctx["region"], location=ctx["location"]))
+
+        def basculer_taille(_event=None):
+            """Agrandit, ou revient a la taille normale selon l'etat courant."""
+            self._open_map_panel(path, region_label, place_label, spot, not enlarged,
+                                 detail=ctx["detail"], back=ctx["back"],
+                                 region=ctx["region"], location=ctx["location"])
+            return "break"
+
+        zoom.bind("<Button-1>", basculer_taille)
         zoom.bind("<Enter>", lambda _e: zoom.configure(fg=FG_HOVER))
         zoom.bind("<Leave>", lambda _e: zoom.configure(fg=FG_LINK))
 
@@ -1280,6 +1286,10 @@ class SwarmWidget:
         canvas.create_image(0, 0, anchor="nw", image=image)
         canvas.image = image           # reference gardee : sinon vidage
         body.configure(height=image.height() + int(30 * self.scale))
+        # Double-clic n'importe ou sur la carte : meme effet que le bouton
+        # d'agrandissement. Le simple clic, lui, ne fait rien — la carte ne se
+        # referme que par sa croix, pour ne pas disparaitre au moindre geste.
+        canvas.bind("<Double-Button-1>", basculer_taille)
 
         marker_ids = []
         if spot:
@@ -1299,8 +1309,12 @@ class SwarmWidget:
                 def vers_detail(_event=None):
                     retour = lambda: self.show_region(region, location)
                     self._show_detail_map(detail, place_label, retour)
+                    return "break"
                 for item in marker_ids + [zone]:
                     canvas.tag_bind(item, "<Button-1>", vers_detail)
+                    # Sur le repere, le double-clic n'agrandit pas : son premier
+                    # clic a deja ouvert la carte annotee.
+                    canvas.tag_bind(item, "<Double-Button-1>", lambda _e: "break")
                     canvas.tag_bind(item, "<Enter>",
                                     lambda _e: canvas.configure(cursor="hand2"))
                     canvas.tag_bind(item, "<Leave>",
@@ -1311,7 +1325,6 @@ class SwarmWidget:
                 self.map_window.destroy()
                 self.map_window = None
         close.bind("<Button-1>", dismiss)
-        canvas.bind("<Button-1>", dismiss)
         close.bind("<Enter>", lambda _e: close.configure(fg=FG_VALUE))
         close.bind("<Leave>", lambda _e: close.configure(fg=FG_EMPTY))
         window.bind("<Escape>", dismiss)
@@ -1881,7 +1894,12 @@ class SwarmWidget:
             fg=FG_HOVER if entering else widgets.get("base_fg", FG_VALUE))
 
     def _click_place(self, event, region: str, index: int) -> None:
-        """Clic sur le lieu : ouvre sa carte, sans toucher a la fiche Pokemon."""
+        """Clic sur le lieu : ouvre sa carte, sans toucher a la fiche Pokemon.
+
+        Un second clic sur le meme lieu la referme, comme la fiche Pokedex : la
+        carte n'ayant plus de fermeture au clic, c'est le geste naturel pour
+        revenir en arriere sans viser la croix.
+        """
         if self._dragged:
             return
         slots = self.rows.get(region) or []
@@ -1890,7 +1908,14 @@ class SwarmWidget:
         entry = slots[index].get("entry")
         if not entry:
             return
-        self.show_region(entry.get("region", ""), entry.get("location", ""))
+        wanted = (entry.get("region", ""), entry.get("location", ""))
+        context = getattr(self, "_map_context", None) or {}
+        showing = (context.get("region", ""), context.get("location", ""))
+        if self.map_window is not None and showing == wanted:
+            self.map_window.destroy()
+            self.map_window = None
+            return
+        self.show_region(*wanted)
 
     def _remaining(self, entry: dict, now: float) -> int:
         return max(0, int(self._end(entry) - now))

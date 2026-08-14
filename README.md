@@ -190,13 +190,22 @@ visuellement tout le reste.
 ### La carte de la région
 
 Un clic sur le **nom du lieu** ouvre la carte officielle de la région, dans un
-panneau de la largeur du widget, avec l'emprise du lieu encadrée. Le bouton
-d'agrandissement double la taille ; il revient au normal à la fermeture. Les
-régions à couches (îles Sevii pour Kanto) n'affichent que la couche contenant
-le lieu.
+panneau de la largeur du widget, avec l'emprise du lieu encadrée. Les régions à
+couches (îles Sevii pour Kanto) n'affichent que la couche contenant le lieu.
 
-Un clic sur le **repère** lui-même bascule sur la carte annotée de la communauté
-quand il y en a une, avec un bouton **←** pour revenir.
+| Geste | Effet |
+|---|---|
+| Clic sur le **nom du lieu** | ouvre la carte ; **un second clic la referme** |
+| Clic sur le **repère** | bascule sur la carte annotée de la communauté, avec **←** pour revenir |
+| **Double-clic** sur la carte | agrandit, ou revient à la taille normale selon l'état courant |
+| Clic ailleurs sur la carte | **rien** |
+| **✕** ou `Échap` | ferme |
+
+> Cliquer la carte la refermait, ce qui la faisait disparaître au moindre geste —
+> y compris en visant le repère. Seule la croix ferme désormais, et le
+> double-clic reprend le rôle du bouton d'agrandissement pour qu'on puisse
+> zoomer sans viser l'en-tête. L'agrandissement n'est pas mémorisé : chaque
+> réouverture repart de la taille normale.
 
 | Région | Lieux repérés | Source des coordonnées |
 |---|---|---|
@@ -235,7 +244,8 @@ nomme ce qui manque. Couverture actuelle : **266/266**.
 Quand une carte annotée existe pour le lieu, une icône **🗺** apparaît à côté de
 son nom dans la fiche. Un clic l'ouvre en grand — c'est la carte du jeu, avec le
 spot marqué et les annotations de la communauté (*Mach Bike*, *Flash*,
-itinéraires…). Clic, `Échap` ou la croix pour fermer.
+itinéraires…). `Échap` ou la croix pour fermer — là aussi, cliquer l'image ne
+fait rien.
 
 > **La couverture est partielle** : 49 lieux sur plusieurs centaines. Alphapedia
 > expose un champ `Map Link` qui n'est rempli que pour 72 spawns sur 1107 —
