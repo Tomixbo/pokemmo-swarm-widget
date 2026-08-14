@@ -1,6 +1,6 @@
 # PokeMMO Swarm Widget
 
-<img src="docs/screenshot.png" alt="Le widget, la fiche Pokédex d'Altaria et la carte de Hoenn" width="660">
+![Le widget, la fiche Pokédex d'Altaria et la carte de Hoenn](docs/screenshot.png)
 
 *Deux alphas en cours — Dracolosse à Johto, Altaria à Hoenn — en rouge, d'où le
 halo qui entoure le widget ; les trois autres régions sont de simples essaims.
