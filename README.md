@@ -561,12 +561,21 @@ moyen », et **toute une lignée évolutive vaut le même score**. Plus le tier 
 > **rang** par défaut — `--rarity points` pour les deux, `--rarity none` pour
 > masquer.
 
-**Propagation aux évolutions** : Alphapedia ne classe que les formes de base
-(Racaillou T7, mais rien pour Gravalanch ni Grolem). Comme une lignée vaut le
-même score, `fetch_assets.py` remonte les chaînes évolutives via PokeAPI et
-propage le tier : 282 formes de base + 300 évolutions = **582 Pokémon couverts**
-sur 649. Les 67 restants — surtout des légendaires, hors événement — n'affichent
-aucun tier plutôt qu'une valeur inventée.
+**Propagation le long de la lignée** : Alphapedia ne classe qu'un membre par
+lignée évolutive (Racaillou T7, mais rien pour Gravalanch ni Grolem). Comme une
+lignée entière vaut le même score, `fetch_assets.py` reconstitue les chaînes via
+PokeAPI et partage le tier : **597 Pokémon couverts** sur 649. Les 52 restants —
+des légendaires, hors événement — n'affichent aucun tier plutôt qu'une valeur
+inventée.
+
+> Le partage se fait **dans les deux sens**, et pas seulement vers les
+> évolutions. Le membre classé n'est pas toujours le plus bas de la chaîne : les
+> quinze bébés (Pichu, Mime Jr., Goinfrex…) n'ont aucun ancêtre, et c'est leur
+> évolution qu'Alphapedia classe. Remonter la chaîne les laissait sans tier.
+>
+> En cas de désaccord entre membres classés, on s'abstient. La lignée Ninjask
+> porte Nincada et Ninjask en T2 mais **Munja en T0** — bien plus rare — et
+> deviner y serait faux.
 
 ### Le rognage des sprites
 

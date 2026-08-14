@@ -1089,24 +1089,46 @@ def fetch_evolution_parents(workers: int) -> dict:
 
 
 def propagate_tiers(tiers: dict, parents: dict) -> dict:
-    """Etend le classement aux evolutions, qui heritent de leur forme de base."""
+    """Etend le classement a toute la lignee evolutive.
+
+    Aux Shiny Wars une lignee entiere vaut le meme score, mais Alphapedia n'en
+    classe qu'un membre. Se contenter de remonter la chaine vers un ancetre
+    classe ne suffit pas : le membre classe est parfois SOUS l'espece cherchee.
+    Les quinze bebes (Pichu, Mime Jr., Munchlax...) n'ont aucun ancetre, et
+    c'est leur evolution qu'Alphapedia classe — ils restaient donc sans tier.
+
+    On regroupe par lignee et on partage le tier dans les deux sens. En cas de
+    desaccord entre membres classes on s'abstient : la lignee Nincada porte
+    Nincada et Ninjask en T2 mais Shedinja en T0, et deviner y serait faux.
+    """
     by_key = {normalize(name): tier for name, tier in tiers.items()}
     parent_by_key = {normalize(k): (normalize(v) if v else None)
                      for k, v in parents.items()}
-    display = {normalize(k): k for k in parents}
+
+    def root(key: str) -> str:
+        """Racine de la lignee, en se gardant d'un cycle dans les donnees."""
+        seen = set()
+        while key and key not in seen:
+            seen.add(key)
+            parent = parent_by_key.get(key)
+            if not parent:
+                return key
+            key = parent
+        return key
+
+    chains: dict[str, list[str]] = {}
+    for key in parent_by_key:
+        chains.setdefault(root(key), []).append(key)
 
     added = {}
-    for key in parent_by_key:
-        if key in by_key:
-            continue
-        seen, cursor = set(), key
-        # On remonte la chaine jusqu'a trouver un ancetre classe.
-        while cursor and cursor not in seen:
-            seen.add(cursor)
-            cursor = parent_by_key.get(cursor)
-            if cursor and cursor in by_key:
-                added[key] = by_key[cursor]
-                break
+    for members in chains.values():
+        known = {by_key[m] for m in members if m in by_key}
+        if len(known) != 1:
+            continue                    # aucun classe, ou classes en desaccord
+        tier = known.pop()
+        for member in members:
+            if member not in by_key:
+                added[member] = tier
     return added
 
 
