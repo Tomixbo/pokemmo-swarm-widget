@@ -435,6 +435,7 @@ class NtfyFeed(threading.Thread):
 
 user32 = ctypes.WinDLL("user32", use_last_error=True)
 shell32 = ctypes.WinDLL("shell32", use_last_error=True)
+kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
 
 WM_APP_TRAY = 0x8001
 WM_LBUTTONUP, WM_RBUTTONUP, WM_DESTROY = 0x0202, 0x0205, 0x0002
@@ -521,6 +522,49 @@ def _declare_signatures() -> None:
                                       ctypes.c_int, ctypes.c_int, wintypes.HWND,
                                       ctypes.c_void_p]
     user32.TrackPopupMenu.restype = ctypes.c_int
+
+    # Toute fonction recevant un HANDLE ou un pointeur doit etre declaree : au
+    # dela de 2 Go, l'adresse ne tient pas dans l'int C que ctypes suppose par
+    # defaut, et l'appel leve OverflowError.
+    #
+    # L'icone systeme a longtemps tenu sur deux erreurs qui s'annulaient :
+    # GetModuleHandleW sans restype rendait le handle tronque sur 32 bits
+    # (0x7ff6c0760000 -> -1066008576), et cette valeur amputee passait sans
+    # broncher dans le int suppose par CreateWindowExW. Windows tolerait ce
+    # hInstance faux. Des que le handle est juste, la conversion echoue et le
+    # thread de l'icone meurt — sans laisser de trace, pythonw n'ayant pas de
+    # console. Declarer les deux bouts est la seule facon d'etre sur.
+    kernel32.GetModuleHandleW.argtypes = [wintypes.LPCWSTR]
+    kernel32.GetModuleHandleW.restype = wintypes.HMODULE
+    user32.CreateWindowExW.argtypes = [
+        wintypes.DWORD, wintypes.LPCWSTR, wintypes.LPCWSTR, wintypes.DWORD,
+        ctypes.c_int, ctypes.c_int, ctypes.c_int, ctypes.c_int,
+        wintypes.HWND, wintypes.HMENU, wintypes.HINSTANCE, wintypes.LPVOID]
+    user32.RegisterClassW.argtypes = [ctypes.POINTER(WNDCLASSW)]
+    user32.RegisterClassW.restype = wintypes.ATOM
+    user32.LoadIconW.argtypes = [wintypes.HINSTANCE, wintypes.LPCWSTR]
+    user32.LoadIconW.restype = wintypes.HICON
+    user32.GetMessageW.argtypes = [ctypes.POINTER(wintypes.MSG), wintypes.HWND,
+                                   wintypes.UINT, wintypes.UINT]
+    user32.GetMessageW.restype = ctypes.c_int
+    user32.TranslateMessage.argtypes = [ctypes.POINTER(wintypes.MSG)]
+    user32.DispatchMessageW.argtypes = [ctypes.POINTER(wintypes.MSG)]
+    user32.DispatchMessageW.restype = LRESULT
+    user32.PostMessageW.argtypes = [wintypes.HWND, wintypes.UINT,
+                                    wintypes.WPARAM, wintypes.LPARAM]
+    user32.PostQuitMessage.argtypes = [ctypes.c_int]
+    user32.GetCursorPos.argtypes = [ctypes.POINTER(wintypes.POINT)]
+    user32.CreatePopupMenu.argtypes = []
+    user32.DestroyMenu.argtypes = [wintypes.HMENU]
+    user32.SetForegroundWindow.argtypes = [wintypes.HWND]
+    user32.FindWindowW.argtypes = [wintypes.LPCWSTR, wintypes.LPCWSTR]
+    user32.GetParent.argtypes = [wintypes.HWND]
+    user32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
+    user32.MonitorFromWindow.restype = wintypes.HANDLE
+    user32.GetMonitorInfoW.argtypes = [wintypes.HANDLE,
+                                       ctypes.POINTER(MONITORINFO)]
+    user32.GetSystemMetrics.argtypes = [ctypes.c_int]
+    user32.GetSystemMetrics.restype = ctypes.c_int
     user32.MonitorFromWindow.argtypes = [wintypes.HWND, wintypes.DWORD]
     user32.MonitorFromWindow.restype = wintypes.HANDLE
     user32.GetMonitorInfoW.argtypes = [wintypes.HANDLE, ctypes.POINTER(MONITORINFO)]
@@ -709,7 +753,7 @@ class TrayIcon(threading.Thread):
         cls = WNDCLASSW()
         cls.lpfnWndProc = self._proc
         cls.lpszClassName = "SwarmWidgetTray"
-        cls.hInstance = ctypes.windll.kernel32.GetModuleHandleW(None)
+        cls.hInstance = kernel32.GetModuleHandleW(None)
         if not user32.RegisterClassW(ctypes.byref(cls)):
             return
 
