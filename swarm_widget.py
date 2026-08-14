@@ -1552,6 +1552,12 @@ class SwarmWidget:
                 widgets = {"region": region, "badge": badge, "tier": tier,
                            "icon": icon, "name": name, "where": where,
                            "timer": timer,
+                           # Bandeau des etiquettes et ligne du nom : _render
+                           # depile le premier quand la region est vide, sinon
+                           # sa hauteur de ligne decalerait le « --- » vers le
+                           # bas alors que le nom de region reste centre.
+                           "badges": badges, "line": line, "stack": stack,
+                           "badges_pady": (0, int(round(3 * self.scale))),
                            # Seuls ces widgets sont geres par grid : badge et
                            # name sont empiles dans stack via pack().
                            "_gridded": (region, icon, stack, timer)}
@@ -1955,6 +1961,19 @@ class SwarmWidget:
                         widgets["entry"] = None
                         widgets["badge"].configure(text="")
                         widgets["tier"].configure(text="")
+                        # Le bandeau des etiquettes est depile, pas seulement
+                        # vide : un Label sans texte occupe toujours une hauteur
+                        # de ligne, qui poussait le « --- » sous le nom de
+                        # region au lieu de l'aligner dessus.
+                        #
+                        # La hauteur ainsi liberee est rendue en marge autour du
+                        # nom : sans cela la ligne se tasserait, et le widget
+                        # changerait de taille au gre des essaims.
+                        widgets["badges"].pack_forget()
+                        creux = (widgets.get("_stack_h") or 0) - \
+                            widgets["line"].winfo_reqheight()
+                        widgets["line"].pack_configure(
+                            pady=(creux // 2, creux - creux // 2) if creux > 0 else 0)
                         widgets["icon"].configure(image=self.blank)
                         widgets["name"].configure(text="---", fg=FG_EMPTY)
                         widgets["where"].configure(text="")
@@ -1970,6 +1989,17 @@ class SwarmWidget:
                     for w in widgets["_gridded"]:
                         w.grid()
 
+                # Le bandeau a pu etre depile pendant que la region etait vide.
+                # winfo_manager() vaut "" tant qu'aucun gestionnaire ne le gere,
+                # contrairement a winfo_ismapped() qui depend de l'affichage.
+                if widgets["badges"].winfo_manager() != "pack":
+                    widgets["line"].pack_configure(pady=0)
+                    widgets["badges"].pack(anchor="w", pady=widgets["badges_pady"],
+                                           before=widgets["line"])
+                # Hauteur de reference d'une ligne pleine, relevee une fois :
+                # c'est elle que la ligne vide doit reproduire.
+                if not widgets.get("_stack_h"):
+                    widgets["_stack_h"] = widgets["stack"].winfo_reqheight()
                 widgets["badge"].configure(text=KIND_LABEL.get(kind, "Essaim"),
                                            fg=KIND_COLOR.get(kind, FG_TIMER))
 
