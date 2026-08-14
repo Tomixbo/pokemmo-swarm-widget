@@ -11,6 +11,26 @@
 
 Elle agrège les flux : elle ne passe au rouge que si **tous** sont tombés.
 
+## Le cri du Pokémon
+
+Un haut-parleur suit le titre **ESSAIMS** : 🔇 quand le son est coupé, 🔊 sinon.
+Un clic bascule, tout comme l'entrée correspondante du menu de l'icône système.
+
+- **Muet au lancement**, toujours. Un widget qui se met à crier tout seul au
+  démarrage de la session serait une mauvaise surprise, et le cache rejoué au
+  démarrage produirait une douzaine de cris d'affilée.
+- **Un cri par événement**, et un seul : le même essaim arrive souvent par les
+  deux flux. La signature retenue — région, type, espèce, lieu — ignore
+  volontairement l'horodatage, qui diffère d'un flux à l'autre pour un événement
+  identique. Elle est oubliée à l'expiration, si bien qu'un essaim qui
+  réapparaît plus tard sonne de nouveau.
+- **Une file d'attente**, pas de superposition. Deux essaims coup sur coup se
+  suivent : la lecture est bloquante dans son propre fil, le suivant part quand
+  le précédent est fini. La file est bornée à six — en cas d'avalanche, mieux
+  vaut abandonner les surnuméraires que sonner une minute après l'événement.
+- **Le volume est retenu**, pas le silence : le widget redémarre muet mais
+  retrouve le niveau choisi quand on le rétablit.
+
 ## La fiche Pokédex
 
 **Survol** du sprite ou du nom : le nom passe en bleu clair et le sprite grossit
@@ -167,10 +187,14 @@ Clic gauche : afficher/masquer. Clic droit :
 | Plus opaque (+5 %) | rend le widget moins transparent au repos |
 | Plus transparent (−5 %) | le rend plus discret |
 | Transparence par défaut | revient à `72 %`, affiche la valeur courante |
+| Cri du Pokémon à chaque essaim | coupe ou rétablit le son (coche quand il est actif) |
+| Son plus fort (+10 %) | monte le volume des cris |
+| Son moins fort (−10 %) | le baisse |
+| Volume par défaut | revient à `60 %`, affiche la valeur courante |
 | Afficher / masquer | |
 | Quitter | ferme le widget |
 
-Taille **et** transparence sont retenues pour les lancements suivants
+Taille, transparence **et volume** sont retenus pour les lancements suivants
 (`.widget_state.json`).
 
 Le menu règle l'opacité **au repos** ; celle au survol suit automatiquement si on

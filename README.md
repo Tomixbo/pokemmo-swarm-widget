@@ -33,6 +33,7 @@ dans un petit panneau toujours visible, que le jeu tourne ou non.
 | **Fiche Pokédex** | rareté, types colorés, six jauges de statistiques, capacité figée des alphas |
 | **Cartes de région** | 486 lieux repérés sur les cartes officielles, plus 49 cartes annotées par la communauté |
 | **Alphas signalés** | badge rouge, sprite cerclé de rouge, halo pulsant autour du widget |
+| **Cri du Pokémon** | joué une fois à chaque nouvelle apparition — **muet par défaut**, volume réglable et retenu |
 | **Discret** | translucide au repos, opaque au survol, ancrable au bureau ou au premier plan |
 | **Rien sur le disque** | l'état vit en mémoire ; seuls position, échelle et transparence sont retenus |
 | **Aucune dépendance** | bibliothèque standard uniquement, Pillow compris |
@@ -54,10 +55,10 @@ pythonw swarm_widget.py
 Ou double-clic sur `start_widget.cmd`.
 
 `fetch_assets.py` télécharge ce que le dépôt ne peut pas contenir : 649 icônes,
-649 grandes images, 649 variantes à halo rouge, et les cartes annotées de la
-communauté — environ 6 Mo, plus 42 Mo si tu gardes les cartes annotées. Les
-données dérivées (noms, raretés, coordonnées des lieux) sont, elles, versionnées :
-inutile de les reconstruire.
+649 grandes images, 649 variantes à halo rouge et 649 cris — environ 11 Mo, plus
+42 Mo si tu gardes les cartes annotées de la communauté. Les données dérivées
+(noms, raretés, coordonnées des lieux) sont, elles, versionnées : inutile de les
+reconstruire.
 
 > Rien à installer avec `pip`. `requirements.txt` est vide de dépendances et
 > documente simplement les prérequis.
@@ -126,10 +127,14 @@ droit administrateur. Pour désactiver : `install_startup.ps1 -Remove`.
 | Clic sur le **repère** de la carte | bascule sur la carte annotée de la communauté, avec **←** pour revenir |
 | **Double-clic** sur la carte | agrandit, ou revient à la taille normale |
 | **✕** ou `Échap` | ferme le panneau |
+| Clic sur le **🔇 / 🔊** après le titre | coupe ou rétablit le cri du Pokémon |
 
-Le widget se déplace à la souris. Taille, transparence et ancrage se règlent
-aussi depuis l'icône de la zone de notification, et sont retenus d'une session à
-l'autre.
+Le cri est joué **une fois** à chaque nouvelle apparition. Le widget démarre
+toujours **muet** ; le volume, lui, est retenu d'une session à l'autre. Deux
+essaims coup sur coup se suivent au lieu de se superposer.
+
+Le widget se déplace à la souris. Taille, transparence, ancrage, son et volume
+se règlent aussi depuis l'icône de la zone de notification.
 
 ---
 

@@ -22,6 +22,32 @@ que des modèles 3D, `particles.pak` des effets, `atlas/` l'interface. Les
 | `sprite_bbox*.json` — cadrage utile de chaque sprite | calculé localement | 39 Ko |
 | `regions.json` — emprise des 486 lieux | décompilations `pret` + pokebip | 31 Ko |
 
+## Les cris
+
+649 cris, environ 8 Ko chacun, **5,0 Mo** au total — téléchargés depuis Pokémon
+Showdown, rangés sous le numéro de Pokédex.
+
+Le MP3 n'est pas un choix esthétique mais le seul format lisible sans
+dépendance. `winsound` ne lit que du WAV ; MCI (`winmm.dll`) ouvre le MP3
+nativement mais **refuse l'OGG** — vérifié, l'ouverture échoue en automatique,
+en `type mpegvideo` et en `type waveaudio`.
+
+L'écart de poids est de toute façon négligeable, contrairement à ce que laissait
+croire un premier sondage :
+
+| Source | Moyenne | Total 649 |
+|---|---|---|
+| OGG d'époque (PokeAPI `legacy`) | 7,6 Ko | 4,8 Mo |
+| **MP3 (Showdown)** | **7,8 Ko** | **5,0 Mo** |
+| OGG « latest » (PokeAPI) | 13,5 Ko | 8,5 Mo |
+
+Le format lourd est l'OGG *latest*, pas le MP3 : 200 Ko séparent le MP3 de
+l'OGG d'époque sur l'ensemble, soit 4 %.
+
+> Les deux Nidoran ont demandé une exception : leur symbole de genre disparaît à
+> la normalisation et les confond tous deux en `nidoran`. Showdown les distingue
+> par un suffixe (`nidoranf`, `nidoranm`) — table `CRIES_ALIASES`.
+
 ## Les noms de lieux
 
 Alphapedia publie **ses propres tables de traduction**, celles que son site

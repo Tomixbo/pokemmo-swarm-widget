@@ -5,6 +5,7 @@ sprites/
 sprites_big/
 sprites_alpha/
 maps/
+cries/
 
 # Cache des sources distantes (depots pret, pages pokebip).
 .pret_cache/

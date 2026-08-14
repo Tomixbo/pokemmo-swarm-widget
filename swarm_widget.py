@@ -120,6 +120,7 @@ BBOX_BIG_FILE = HERE / "sprite_bbox_big.json"
 SPRITE_ALPHA_DIR = HERE / "sprites_alpha"
 BBOX_ALPHA_FILE = HERE / "sprite_bbox_alpha.json"
 STATE_FILE = HERE / ".widget_state.json"
+CRIES_DIR = HERE / "cries"
 
 # Cellule d'un sprite a l'echelle 1.0, en pixels. Le rognage ramene le Pokemon
 # a ~24x22 px utiles : cette cellule l'agrandit d'environ deux fois.
@@ -446,8 +447,10 @@ TPM_RIGHTBUTTON, TPM_RETURNCMD = 0x2, 0x100
 ID_TOGGLE, ID_QUIT, ID_PIN_TOP, ID_PIN_DESKTOP = 1001, 1002, 1003, 1004
 ID_BIGGER, ID_SMALLER, ID_RESET = 1005, 1006, 1007
 ID_OPAQUE, ID_TRANSPARENT, ID_OPACITY_RESET = 1008, 1009, 1010
+ID_MUTE, ID_VOL_UP, ID_VOL_DOWN, ID_VOL_RESET = 1011, 1012, 1013, 1014
 
 DEFAULT_IDLE_OPACITY = 0.72
+DEFAULT_VOLUME = 0.6
 
 LRESULT = ctypes.c_longlong if ctypes.sizeof(ctypes.c_void_p) == 8 else ctypes.c_long
 WNDPROC = ctypes.WINFUNCTYPE(LRESULT, wintypes.HWND, wintypes.UINT,
@@ -536,12 +539,75 @@ def _declare_signatures() -> None:
 _declare_signatures()
 
 
+class CryPlayer(threading.Thread):
+    """Joue le cri d'une espece, un seul a la fois.
+
+    MCI (winmm) est la seule voie sans dependance : winsound ne lit que du WAV,
+    et les cris n'existent qu'en MP3 ou en OGG — que MCI refuse d'ouvrir, verifie
+    en automatique comme en type mpegvideo et waveaudio.
+
+    Toutes les commandes MCI restent dans ce thread : un peripherique ouvert
+    ailleurs ne serait pas reutilisable. « play ... wait » bloque jusqu'a la fin
+    du son, si bien que la file s'ecoule d'elle-meme un cri apres l'autre —
+    deux essaims coup sur coup se suivent au lieu de se superposer.
+    """
+
+    def __init__(self, volume: float = DEFAULT_VOLUME) -> None:
+        super().__init__(daemon=True)
+        # File bornee : en cas d'avalanche, mieux vaut laisser tomber les
+        # surnumeraires que de sonner une minute apres l'evenement.
+        self.pending: queue.Queue = queue.Queue(maxsize=6)
+        self.volume = min(1.0, max(0.0, volume))
+        self.muted = True                  # toujours muet au lancement
+        self.stop = threading.Event()
+        self.winmm = None
+
+    def play(self, dex: int | None) -> None:
+        """Met un cri en file. Sans effet si le son est coupe."""
+        if self.muted or not dex:
+            return
+        try:
+            self.pending.put_nowait(dex)
+        except queue.Full:
+            pass
+
+    def _mci(self, command: str) -> bool:
+        buffer = ctypes.create_unicode_buffer(256)
+        return self.winmm.mciSendStringW(
+            ctypes.c_wchar_p(command), buffer, 255, None) == 0
+
+    def run(self) -> None:
+        try:
+            self.winmm = ctypes.WinDLL("winmm.dll")
+            self.winmm.mciSendStringW.argtypes = [
+                ctypes.c_wchar_p, ctypes.c_wchar_p, wintypes.UINT, wintypes.HWND]
+            self.winmm.mciSendStringW.restype = wintypes.DWORD
+        except (OSError, AttributeError):
+            return                          # pas de sortie audio : on renonce
+        while not self.stop.is_set():
+            try:
+                dex = self.pending.get(timeout=0.4)
+            except queue.Empty:
+                continue
+            path = CRIES_DIR / f"{dex}.mp3"
+            # Le son a pu etre coupe pendant l'attente en file.
+            if self.muted or not path.exists():
+                continue
+            self._mci("close criwidget")    # residu d'une lecture interrompue
+            if not self._mci(f'open "{path}" type mpegvideo alias criwidget'):
+                continue
+            self._mci(f"setaudio criwidget volume to {int(self.volume * 1000)}")
+            self._mci("play criwidget wait")
+            self._mci("close criwidget")
+
+
 class TrayIcon(threading.Thread):
     """Icone de notification. Vit dans son propre thread : Windows exige que la
     boucle de messages tourne dans le thread qui a cree la fenetre."""
 
     def __init__(self, tooltip: str, on_toggle, on_quit, on_pin, get_pin,
-                 on_scale, get_scale, on_opacity, get_opacity):
+                 on_scale, get_scale, on_opacity, get_opacity,
+                 on_mute, get_mute, on_volume, get_volume):
         super().__init__(daemon=True)
         self.tooltip = tooltip
         self.on_toggle = on_toggle
@@ -552,6 +618,10 @@ class TrayIcon(threading.Thread):
         self.get_scale = get_scale
         self.on_opacity = on_opacity
         self.get_opacity = get_opacity
+        self.on_mute = on_mute
+        self.get_mute = get_mute
+        self.on_volume = on_volume
+        self.get_volume = get_volume
         self.hwnd = None
         self._proc = WNDPROC(self._wndproc)  # reference gardee : sinon collecte
 
@@ -586,6 +656,14 @@ class TrayIcon(threading.Thread):
                            f"Transparence par defaut  (actuelle : "
                            f"{self.get_opacity() * 100:.0f} %)")
         user32.AppendMenuW(menu, MF_SEPARATOR, 0, None)
+        user32.AppendMenuW(menu, MF_STRING | (0 if self.get_mute() else MF_CHECKED),
+                           ID_MUTE, "Cri du Pokemon a chaque essaim")
+        user32.AppendMenuW(menu, MF_STRING, ID_VOL_UP, "Son plus fort  (+10 %)")
+        user32.AppendMenuW(menu, MF_STRING, ID_VOL_DOWN, "Son moins fort  (-10 %)")
+        user32.AppendMenuW(menu, MF_STRING, ID_VOL_RESET,
+                           f"Volume par defaut  (actuel : "
+                           f"{self.get_volume() * 100:.0f} %)")
+        user32.AppendMenuW(menu, MF_SEPARATOR, 0, None)
         user32.AppendMenuW(menu, MF_STRING, ID_TOGGLE, "Afficher / masquer")
         user32.AppendMenuW(menu, MF_SEPARATOR, 0, None)
         user32.AppendMenuW(menu, MF_STRING, ID_QUIT, "Quitter")
@@ -618,6 +696,14 @@ class TrayIcon(threading.Thread):
             self.on_opacity(-0.05, None)
         elif choice == ID_OPACITY_RESET:
             self.on_opacity(None, DEFAULT_IDLE_OPACITY)
+        elif choice == ID_MUTE:
+            self.on_mute()
+        elif choice == ID_VOL_UP:
+            self.on_volume(0.1, None)
+        elif choice == ID_VOL_DOWN:
+            self.on_volume(-0.1, None)
+        elif choice == ID_VOL_RESET:
+            self.on_volume(None, DEFAULT_VOLUME)
 
     def run(self) -> None:
         cls = WNDCLASSW()
@@ -956,6 +1042,12 @@ class SwarmWidget:
         self.glow_step = 0
         self.glow_last = (None, None)
         self.panel = DetailPanel(self)
+        # Cris : muet au lancement, volume repris de la derniere session.
+        # _load_state() ajustera le volume avant que le thread ne serve.
+        self.cries = CryPlayer()
+        # Evenements deja annonces : un meme essaim arrive par les deux flux,
+        # et le cache rejoue au demarrage ne doit pas declencher de fanfare.
+        self.announced: set = set()
         self._dragged = False
         # Ligne actuellement survolee : _render() doit preserver son
         # accentuation, sinon la mise a jour du decompte l'efface chaque seconde.
@@ -1475,6 +1567,18 @@ class SwarmWidget:
                     pady=(0, int(16 * self.scale)))
         tk.Label(header, text="ESSAIMS", bg=BG, fg=FG_TITLE,
                  font=self._font(9, "bold")).pack(side="left")
+        # Haut-parleur juste apres le titre : le son est coupe au lancement, il
+        # faut donc un rappel visible de son etat et un moyen direct de le
+        # retablir, sans passer par l'icone systeme.
+        # Plus gros que le titre : c'est une commande, pas une decoration, et
+        # elle doit rester reperable alors que le widget demarre muet.
+        self.speaker = tk.Label(header, bg=BG, fg=FG_REGION, cursor="hand2",
+                                font=self._font(13, "bold"))
+        self.speaker.pack(side="left", padx=(int(round(8 * self.scale)), 0))
+        self.speaker.bind("<ButtonRelease-1>", lambda _e: self.toggle_mute())
+        self.speaker.bind("<Enter>", lambda _e: self.speaker.configure(fg=FG_HOVER))
+        self.speaker.bind("<Leave>", lambda _e: self._render_speaker())
+        self._render_speaker()
         self.status = tk.Label(header, text="●", bg=BG, fg=FG_EMPTY, font=self._font(9))
         self.status.pack(side="right")
 
@@ -1618,13 +1722,20 @@ class SwarmWidget:
                 setattr(self, key, min(1.0, max(low, float(saved[key]))))
             except (KeyError, ValueError, TypeError):
                 pass
+        try:
+            self.cries.volume = min(1.0, max(0.05, float(saved["volume"])))
+        except (KeyError, ValueError, TypeError):
+            pass
 
     def _save_state(self) -> None:
         try:
             STATE_FILE.write_text(json.dumps(
                 {"x": self.position[0], "y": self.position[1],
                  "pin": self.pin, "scale": self.scale,
-                 "opacity": self.opacity, "idle_opacity": self.idle_opacity}),
+                 "opacity": self.opacity, "idle_opacity": self.idle_opacity,
+                 # Le silence n'est pas retenu, le niveau si : le widget
+                 # demarre toujours muet mais retrouve le volume choisi.
+                 "volume": self.cries.volume}),
                 encoding="utf-8")
         except OSError:
             pass
@@ -1721,6 +1832,16 @@ class SwarmWidget:
                         and previous["location"] == item["location"]):
                     item["despawn"] = previous["despawn"]
                 self.state[key] = item
+                # Un cri par evenement, et un seul : le meme essaim arrive par
+                # les deux flux, et le cache rejoue au demarrage en rejouerait
+                # une douzaine d'affilee. La signature ignore l'horodatage, qui
+                # differe d'un flux a l'autre pour un evenement identique.
+                signature = (region, item.get("kind", "swarm"),
+                             item.get("pokemon", ""), item.get("location", ""))
+                if signature not in self.announced:
+                    self.announced.add(signature)
+                    info = self.table.get(item.get("pokemon", "")) or {}
+                    self.cries.play(info.get("id"))
         except queue.Empty:
             pass
 
@@ -1735,6 +1856,12 @@ class SwarmWidget:
         for key, entry in list(self.state.items()):
             if now >= self._end(entry):
                 del self.state[key]
+                # L'evenement est fini : on oublie sa signature, sinon le meme
+                # essaim reapparaissant plus tard resterait muet — et la table
+                # grossirait sans fin sur une longue session.
+                self.announced.discard(
+                    (key[0], entry.get("kind", "swarm"),
+                     entry.get("pokemon", ""), entry.get("location", "")))
 
     @staticmethod
     def _end(entry: dict) -> float:
@@ -1829,6 +1956,31 @@ class SwarmWidget:
             return
         self.idle_opacity = target
         self.opacity = max(self.opacity, target)
+        self._save_state()
+
+    def toggle_mute(self) -> None:
+        """Coupe ou retablit le cri. Appelable depuis le thread de l'icone."""
+        self.cries.muted = not self.cries.muted
+        self.root.after(0, self._render_speaker)
+
+    def _render_speaker(self) -> None:
+        """Etat du haut-parleur dans l'entete."""
+        coupe = self.cries.muted
+        # Meme coupe, l'icone reste lisible : FG_EMPTY la noierait dans le fond.
+        self.speaker.configure(text="🔇" if coupe else "🔊",
+                               fg=FG_REGION if coupe else FG_LINK)
+
+    def change_volume(self, delta: float | None = None, absolute: float | None = None):
+        """Regle le volume des cris, et le retient d'une session a l'autre.
+
+        Le volume est memorise, contrairement au silence : le widget demarre
+        toujours muet, mais retrouve le niveau choisi quand on le retablit.
+        """
+        target = absolute if absolute is not None else self.cries.volume + (delta or 0)
+        target = min(1.0, max(0.05, round(target, 2)))
+        if abs(target - self.cries.volume) < 1e-6:
+            return
+        self.cries.volume = target
         self._save_state()
 
     def change_scale(self, factor: float | None = None, absolute: float | None = None):
@@ -2156,6 +2308,7 @@ def main() -> int:
     def quit_all() -> None:
         for f in feeds:
             f.stop.set()
+        widget.cries.stop.set()
         tray.remove()
         root.after(0, root.destroy)
 
@@ -2164,8 +2317,11 @@ def main() -> int:
     tray = TrayIcon(tip, widget.toggle, quit_all,
                     widget.apply_pin, lambda: widget.pin,
                     widget.change_scale, lambda: widget.scale,
-                    widget.change_opacity, lambda: widget.idle_opacity)
+                    widget.change_opacity, lambda: widget.idle_opacity,
+                    widget.toggle_mute, lambda: widget.cries.muted,
+                    widget.change_volume, lambda: widget.cries.volume)
     tray.start()
+    widget.cries.start()
     for f in feeds:
         f.start()
 

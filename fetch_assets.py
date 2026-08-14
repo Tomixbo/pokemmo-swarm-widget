@@ -148,6 +148,46 @@ def fetch_sprite(dex: int, force: bool, big: bool = False) -> tuple[int, bool, s
         return dex, False, str(exc)
 
 
+CRIES_DIR = HERE / "cries"
+# Cris des especes, servis en MP3 par Pokemon Showdown, indexes par nom
+# normalise (« mr-mime » -> « mrmime »).
+#
+# Le MP3 n'est pas un choix esthetique mais le seul format lisible sans
+# dependance : winsound ne lit que du WAV, et MCI — qui ouvre le MP3
+# nativement — refuse l'OGG (verifie, l'ouverture echoue en automatique, en
+# type mpegvideo et en type waveaudio). L'ecart de poids est negligeable :
+# 5,0 Mo pour les 649 cris en MP3, contre 4,8 Mo pour les OGG d'epoque.
+CRIES_URL = "https://play.pokemonshowdown.com/audio/cries/{name}.mp3"
+MP3_HEADS = (b"\xff\xfb", b"\xff\xf3", b"\xff\xf2", b"\xff\xfa")
+# Les deux Nidoran perdent leur symbole de genre a la normalisation et se
+# confondent tous deux en « nidoran » ; Showdown les distingue par un suffixe.
+CRIES_ALIASES = {29: "nidoranf", 32: "nidoranm"}
+
+
+def fetch_cry(dex: int, english: str, force: bool) -> tuple[int, bool, str]:
+    """Cri d'une espece, range sous son numero de Pokedex.
+
+    Le fichier est nomme par le numero et non par l'espece : le widget ne
+    connait que le nom anglais du flux, et passe deja par la table des noms
+    pour tout le reste.
+    """
+    target = CRIES_DIR / f"{dex}.mp3"
+    if target.exists() and target.stat().st_size > 0 and not force:
+        return dex, True, "cache"
+    try:
+        request = urllib.request.Request(
+            CRIES_URL.format(name=CRIES_ALIASES.get(dex) or normalize(english)),
+            headers={"User-Agent": BROWSER_UA})
+        with urllib.request.urlopen(request, timeout=30) as response:
+            payload = response.read()
+    except (urllib.error.URLError, OSError, TimeoutError) as exc:
+        return dex, False, str(exc)[:40]
+    if payload[:3] != b"ID3" and payload[:2] not in MP3_HEADS:
+        return dex, False, "pas un MP3"
+    target.write_bytes(payload)
+    return dex, True, "telecharge"
+
+
 def http_get(url: str, timeout: int = 60) -> bytes:
     """GET avec un User-Agent de navigateur : Alphapedia est derriere
     Cloudflare et repond 403 a l'agent par defaut de Python."""
@@ -1296,6 +1336,28 @@ def main() -> int:
     if failures:
         print(f"    echecs : {failures[:5]}")
         print("    Relance le script : seuls les manquants seront repris.")
+
+    CRIES_DIR.mkdir(exist_ok=True)
+    par_dex = {info["id"]: nom for nom, info in table.items()}
+    print(f"[*] Cris : {len(par_dex)} a verifier ...")
+    pris = en_cache = 0
+    manques: list[tuple[int, str]] = []
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        for dex, ok, detail in pool.map(
+                lambda d: fetch_cry(d, par_dex[d], args.force), sorted(par_dex)):
+            if not ok:
+                manques.append((dex, detail))
+            elif detail == "cache":
+                en_cache += 1
+            else:
+                pris += 1
+                if pris % 100 == 0:
+                    print(f"    {pris} telecharges ...")
+    poids = sum(f.stat().st_size for f in CRIES_DIR.glob("*.mp3"))
+    print(f"[+] {pris} telecharges, {en_cache} deja en cache, "
+          f"{len(manques)} echecs — {poids / 1024 / 1024:.1f} Mo au total")
+    if manques:
+        print(f"    echecs : {manques[:5]}")
 
     SPRITE_BIG_DIR.mkdir(exist_ok=True)
     print(f"[*] Grands sprites (96x96) : {len(dex_numbers)} a verifier ...")
