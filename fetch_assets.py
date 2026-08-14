@@ -281,9 +281,23 @@ def render_region(spec: dict, tiles_png: bytes, tilemap: bytes, scale: int = 3):
                 base = sy_t * cols * 2
                 tile, attr = tilemap[base + sx_t], tilemap[base + cols + sx_t]
             else:
+                # Entree de tilemap GBA : index de tuile sur 10 bits (0-1023),
+                # puis miroir H, miroir V, et numero de palette.
+                #
+                #   bits 0-9   index      bit 10  miroir H
+                #   bit 11     miroir V   bits 12-15  palette
+                #
+                # Masquer sur 8 bits repliait toute tuile >= 256 sur une autre :
+                # le tileset en compte 320. La carte principale n'en utilisait
+                # que 6 au-dela (1 %), mais Sevii 6-7 en utilise 30 (5 %), d'ou
+                # une carte principale credible et des couches meconnaissables.
+                #
+                # Les bits de palette restent ignores a dessein : le PNG de pret
+                # stocke des index absolus sur ses 80 couleurs, donc chaque tuile
+                # y porte deja la sienne. Verifie : les index vont jusqu'a 54.
                 offset = (sy_t * cols + sx_t) * 2
                 value = tilemap[offset] | (tilemap[offset + 1] << 8)
-                tile, attr = value & 0xFF, value >> 8
+                tile, attr = value & 0x3FF, value >> 8
             hflip, vflip = attr & 0x04, attr & 0x08
             sx, sy = (tile % per_row) * 8, (tile // per_row) * 8
             if sy + 8 > th:

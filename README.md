@@ -611,6 +611,14 @@ sont téléchargés, assemblés, puis les emprises des lieux sont lues dans les
 données de landmarks. Hoenn a demandé trois hypothèses fausses avant de trouver
 que son tilemap est **planaire** et non des `u16` empaquetés.
 
+> Une entrée de tilemap GBA porte l'index de tuile sur **10 bits**, puis les
+> miroirs et la palette. Le masquer sur 8 bits repliait toute tuile ≥ 256 sur
+> une autre — et le tileset en compte 320. La carte principale de Kanto n'en
+> utilise que 6 au-delà (1 %), donc elle restait crédible ; Sevii 6-7 en utilise
+> 30 (5 %) et devenait méconnaissable. Les bits de palette, eux, sont ignorés à
+> dessein : le PNG de `pret` stocke des index absolus sur ses 80 couleurs, donc
+> chaque tuile y porte déjà la sienne.
+
 > Kanto ne passe pas par des landmarks mais par son **layout MAPSEC**, une
 > grille où chaque tuile porte le nom de la zone qui l'occupe : les emprises y
 > sont exactes par construction, sans calage. Encore faut-il lire la grille
