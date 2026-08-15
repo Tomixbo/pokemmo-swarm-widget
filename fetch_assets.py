@@ -77,6 +77,44 @@ SPRITE_BIG_URL = ("https://raw.githubusercontent.com/PokeAPI/sprites/master/"
                   "sprites/pokemon/{id}.png")
 
 
+def gen5_type_overrides() -> dict:
+    """Types de cinquieme generation pour les especes que la 6e a retypees.
+
+    PokeMMO s'arrete a Noir/Blanc : le type Fee n'y existe pas, et une demande
+    de l'ajouter a ete refusee sur son forum. Melofee y est Normal, Marill Eau,
+    Mysdibule Acier. Le pokedex public utilise, lui, les types modernes.
+
+    PokeAPI publie les types d'epoque dans past_types : on interroge la liste
+    du type Fee, puis on relit chaque espece concernee. Une vingtaine d'appels,
+    plutot que les 649.
+    """
+    overrides = {}
+    try:
+        raw = json.loads(http_get("https://pokeapi.co/api/v2/type/fairy", 30)
+                         .decode("utf-8"))
+    except Exception as exc:
+        print(f"    [!] types d'epoque indisponibles ({exc}) — types modernes conserves")
+        return overrides
+    for item in raw.get("pokemon") or []:
+        slug = (item.get("pokemon") or {}).get("name")
+        if not slug:
+            continue
+        try:
+            data = json.loads(http_get(
+                f"https://pokeapi.co/api/v2/pokemon/{slug}", 30).decode("utf-8"))
+        except Exception:
+            continue
+        if not 1 <= data.get("id", 0) <= MAX_DEX:
+            continue
+        for passe in data.get("past_types") or []:
+            if (passe.get("generation") or {}).get("name") == "generation-v":
+                overrides[data["id"]] = [t["type"]["name"].capitalize()
+                                         for t in passe.get("types") or []]
+                break
+    print(f"    {len(overrides)} especes ramenees a leurs types de 5e generation")
+    return overrides
+
+
 def build_name_table(force: bool, lang: str) -> dict:
     if DATA_FILE.exists() and not force:
         payload = json.loads(DATA_FILE.read_text(encoding="utf-8"))
@@ -97,6 +135,7 @@ def build_name_table(force: bool, lang: str) -> dict:
     translations = fetch_translations(lang)
     species = translations["pokemon"]
 
+    anciens_types = gen5_type_overrides()
     table = {}
     for entry in source:
         dex = entry.get("id", 0)
@@ -110,7 +149,7 @@ def build_name_table(force: bool, lang: str) -> dict:
         table[english] = {
             "fr": localized,
             "id": dex,
-            "types": entry.get("type") or [],
+            "types": anciens_types.get(dex) or entry.get("type") or [],
             # Stats de base, pour les jauges de l'infobulle.
             "base": entry.get("base") or {},
         }

@@ -28,6 +28,7 @@ import json
 import queue
 import re
 import sys
+import unicodedata
 import threading
 import time
 import tkinter as tk
@@ -176,6 +177,123 @@ TYPE_COLORS = {
     "Rock": "#c5b78c", "Ghost": "#5269ad", "Dragon": "#0b6dc3",
     "Dark": "#5a5465", "Steel": "#5a8ea2", "Fairy": "#ec8fe6",
 }
+
+# Table d'efficacite des types, CINQUIEME generation — celle de PokeMMO, qui
+# s'arrete a Noir/Blanc. Deux ecarts avec la table moderne, et ils comptent :
+#
+#   - le type Fee n'existe pas. Melofee y est Normal, Marill Eau, Mysdibule
+#     Acier. Une demande d'ajout a d'ailleurs ete refusee sur le forum du jeu.
+#   - l'Acier resiste encore au Spectre et aux Tenebres, resistances que la
+#     sixieme generation lui a retirees.
+#
+# Verifie contre past_damage_relations de PokeAPI pour generation-v. Seuls les
+# rapports differents de 1 sont listes : attaquant -> defenseur.
+TYPE_CHART = {
+    "Normal":   {"Rock": 0.5, "Ghost": 0.0, "Steel": 0.5},
+    "Fire":     {"Fire": 0.5, "Water": 0.5, "Grass": 2, "Ice": 2, "Bug": 2,
+                 "Rock": 0.5, "Dragon": 0.5, "Steel": 2},
+    "Water":    {"Fire": 2, "Water": 0.5, "Grass": 0.5, "Ground": 2, "Rock": 2,
+                 "Dragon": 0.5},
+    "Electric": {"Water": 2, "Electric": 0.5, "Grass": 0.5, "Ground": 0.0,
+                 "Flying": 2, "Dragon": 0.5},
+    "Grass":    {"Fire": 0.5, "Water": 2, "Grass": 0.5, "Poison": 0.5,
+                 "Ground": 2, "Flying": 0.5, "Bug": 0.5, "Rock": 2,
+                 "Dragon": 0.5, "Steel": 0.5},
+    "Ice":      {"Fire": 0.5, "Water": 0.5, "Grass": 2, "Ice": 0.5, "Ground": 2,
+                 "Flying": 2, "Dragon": 2, "Steel": 0.5},
+    "Fighting": {"Normal": 2, "Ice": 2, "Poison": 0.5, "Flying": 0.5,
+                 "Psychic": 0.5, "Bug": 0.5, "Rock": 2, "Ghost": 0.0,
+                 "Dark": 2, "Steel": 2},
+    "Poison":   {"Grass": 2, "Poison": 0.5, "Ground": 0.5, "Rock": 0.5,
+                 "Ghost": 0.5, "Steel": 0.0},
+    "Ground":   {"Fire": 2, "Electric": 2, "Grass": 0.5, "Poison": 2,
+                 "Flying": 0.0, "Bug": 0.5, "Rock": 2, "Steel": 2},
+    "Flying":   {"Electric": 0.5, "Grass": 2, "Fighting": 2, "Bug": 2,
+                 "Rock": 0.5, "Steel": 0.5},
+    "Psychic":  {"Fighting": 2, "Poison": 2, "Psychic": 0.5, "Dark": 0.0,
+                 "Steel": 0.5},
+    "Bug":      {"Fire": 0.5, "Grass": 2, "Fighting": 0.5, "Poison": 0.5,
+                 "Flying": 0.5, "Psychic": 2, "Ghost": 0.5, "Dark": 2,
+                 "Steel": 0.5},
+    "Rock":     {"Fire": 2, "Ice": 2, "Fighting": 0.5, "Ground": 0.5,
+                 "Flying": 2, "Bug": 2, "Steel": 0.5},
+    "Ghost":    {"Normal": 0.0, "Psychic": 2, "Ghost": 2, "Dark": 0.5,
+                 "Steel": 0.5},
+    "Dragon":   {"Dragon": 2, "Steel": 0.5},
+    "Dark":     {"Fighting": 0.5, "Psychic": 2, "Ghost": 2, "Dark": 0.5,
+                 "Steel": 0.5},
+    "Steel":    {"Fire": 0.5, "Water": 0.5, "Electric": 0.5, "Ice": 2,
+                 "Rock": 2, "Steel": 0.5},
+}
+
+
+def effectiveness(attack: str, defenders: list) -> float:
+    """Rapport de degats d'un type contre une combinaison defensive."""
+    total = 1.0
+    for defender in defenders:
+        total *= TYPE_CHART.get(attack, {}).get(defender, 1.0)
+    return total
+
+
+def fold(text: str) -> str:
+    """Cle de recherche : sans accent, sans casse, sans ponctuation.
+
+    normalize() ne suffit pas ici — il SUPPRIME les caracteres accentues au lieu
+    de les replier, si bien que « Électhor » deviendrait « lecthor ».
+    """
+    decomposed = unicodedata.normalize("NFD", text)
+    return re.sub(r"[^a-z0-9]", "",
+                  "".join(c for c in decomposed
+                          if unicodedata.category(c) != "Mn").lower())
+
+
+def type_weaknesses(types: list) -> list:
+    """Types qui frappent la cible en super-efficace, du plus fort au moins.
+
+    Rend des couples (rapport, type) : (4.0, "Rock") contre un Feu/Vol.
+    """
+    rapports = ((effectiveness(attack, types), attack) for attack in TYPE_CHART)
+    return sorted((paire for paire in rapports if paire[0] > 1),
+                  key=lambda paire: (-paire[0], paire[1]))
+
+
+def best_counters(table: dict, target: str, limit: int = 6) -> list:
+    """Especes les mieux placees pour affronter `target`.
+
+    Le classement se veut lisible plutot que savant. Faute de donnees
+    d'attaques, on raisonne sur les types seuls, en supposant que l'espece
+    porte une attaque du sien — hypothese courante et souvent vraie, mais qui
+    reste une approximation : c'est un point de depart de reflexion, pas un
+    verdict competitif.
+
+    Trois criteres, dans cet ordre : ce qu'elle inflige, ce qu'elle encaisse en
+    retour, puis sa meilleure statistique offensive avec un appoint de vitesse.
+    """
+    cible = table.get(target)
+    if not cible:
+        return []
+    types_cible = cible.get("types") or []
+    resultats = []
+    for nom, info in table.items():
+        if nom == target:
+            continue
+        types = info.get("types") or []
+        if not types:
+            continue
+        donne = max(effectiveness(t, types_cible) for t in types)
+        if donne < 2:
+            continue                      # sans super-efficacite, sans interet
+        recoit = max((effectiveness(t, types) for t in types_cible), default=1.0)
+        base = info.get("base") or {}
+        offense = max(base.get("Attack", 0), base.get("Sp. Attack", 0))
+        puissance = offense + base.get("Speed", 0) / 2
+        # recoit peut valoir 0 (immunite) : le plancher evite la division par
+        # zero tout en recompensant fortement l'immunite.
+        score = donne / max(recoit, 0.25) * puissance
+        resultats.append((score, donne, recoit, nom))
+    resultats.sort(key=lambda r: (-r[0], r[3]))
+    return resultats[:limit]
+
 
 # Ordre et libelles des stats de base dans l'infobulle.
 STAT_ORDER = [("HP", "PV"), ("Attack", "Att"), ("Defense", "Déf"),
@@ -864,6 +982,9 @@ class DetailPanel:
         if not info:
             return
         self.close()
+        # Les deux panneaux occupent le meme emplacement : ouvrir l'un doit
+        # fermer l'autre, sinon ils se superposent.
+        self.widget.pokedex.close()
         self.current = english
         self.origin = entry
 
@@ -1062,6 +1183,305 @@ class DetailPanel:
         panel.geometry(f"{panel_w}x{main_h}+{x}+{y}")
 
 
+class PokedexPanel:
+    """Bibliotheque de recherche : stats d'une espece, et par quoi la battre.
+
+    Meme fenetre accolee que la fiche Pokedex, mais plus large : deux colonnes
+    y tiennent cote a cote, l'espece a gauche et les contres a droite. La
+    hauteur, elle, reste celle du widget principal — comme tous les panneaux.
+
+    Le champ de recherche et les suggestions occupent la meme zone que le
+    resultat : afficher les trois a la fois deborderait de cette hauteur.
+    """
+
+    GAP = 8
+    MAX_SUGGESTIONS = 8
+    MAX_COUNTERS = 5
+
+    def __init__(self, widget: "SwarmWidget"):
+        self.widget = widget
+        self.window = None
+        self.query = None
+        self.content = None
+        self.current = None
+        self.images = []        # references gardees : sinon Tk vide les images
+
+    def toggle(self) -> None:
+        if self.window is not None:
+            self.close()
+        else:
+            self.show()
+
+    def close(self) -> None:
+        if self.window is not None:
+            self.window.destroy()
+            self.window = None
+        self.content = None
+        self.query = None
+        self.current = None
+        self.images = []
+
+    def _font(self, size, weight="normal"):
+        return ("Segoe UI", max(7, int(round(size * self.widget.scale))), weight)
+
+    def show(self) -> None:
+        scale = self.widget.scale
+        # Meme emplacement que la fiche Pokemon : l'un chasse l'autre.
+        self.widget.panel.close()
+        panel = tk.Toplevel(self.widget.root)
+        panel.overrideredirect(True)
+        panel.attributes("-topmost", self.widget.pin == "top")
+        panel.attributes("-alpha", self.widget.opacity)
+        panel.configure(bg="#2a3140")
+        self.window = panel
+
+        body = tk.Frame(panel, bg=BG_TIP, padx=int(12 * scale), pady=int(10 * scale))
+        body.pack(fill="both", expand=True, padx=1, pady=1)
+
+        head = tk.Frame(body, bg=BG_TIP)
+        head.pack(fill="x")
+        tk.Label(head, text="POKÉDEX", bg=BG_TIP, fg=FG_TITLE,
+                 font=self._font(9, "bold")).pack(side="left")
+        close = tk.Label(head, text="✕", bg=BG_TIP, fg=FG_EMPTY,
+                         font=self._font(10, "bold"), cursor="hand2")
+        close.pack(side="right")
+        close.bind("<Button-1>", lambda _e: self.close())
+        close.bind("<Enter>", lambda _e: close.configure(fg=FG_VALUE))
+        close.bind("<Leave>", lambda _e: close.configure(fg=FG_EMPTY))
+
+        self.query = tk.StringVar()
+        champ = tk.Entry(body, textvariable=self.query, bg="#252c39", fg=FG_VALUE,
+                         insertbackground=FG_VALUE, relief="flat",
+                         font=self._font(10))
+        champ.pack(fill="x", pady=(int(8 * scale), int(6 * scale)),
+                   ipady=int(3 * scale))
+        self.query.trace_add("write", lambda *_: self._render_suggestions())
+        champ.focus_set()
+
+        self.content = tk.Frame(body, bg=BG_TIP)
+        self.content.pack(fill="both", expand=True)
+        self._render_suggestions()
+        panel.bind("<Escape>", lambda _e: self.close())
+        self.reposition()
+
+    # -- recherche ----------------------------------------------------------
+
+    def _matches(self, text: str) -> list:
+        """Especes dont le nom francais ou anglais contient la saisie.
+
+        Les noms commencant par la saisie passent devant : taper « pika » doit
+        proposer Pikachu avant une espece qui ne fait que le contenir.
+        """
+        cle = fold(text)
+        if not cle:
+            return []
+        debuts, dedans = [], []
+        for english, info in self.widget.table.items():
+            noms = (fold(info.get("fr") or ""), fold(english))
+            if any(n.startswith(cle) for n in noms):
+                debuts.append(english)
+            elif any(cle in n for n in noms):
+                dedans.append(english)
+        ordre = sorted(debuts, key=lambda n: self.widget.table[n]["id"])
+        ordre += sorted(dedans, key=lambda n: self.widget.table[n]["id"])
+        return ordre[:self.MAX_SUGGESTIONS]
+
+    def _clear(self) -> None:
+        for enfant in list(self.content.winfo_children()):
+            enfant.destroy()
+        self.images = []
+
+    def _render_suggestions(self) -> None:
+        if self.content is None:
+            return
+        texte = self.query.get()
+        propositions = self._matches(texte)
+        # Saisie vide : on garde le resultat courant plutot que de vider l'ecran.
+        if not texte.strip() and self.current:
+            return
+        self._clear()
+        self.current = None
+        if not texte.strip():
+            tk.Label(self.content, text="Cherche un Pokémon par son nom.",
+                     bg=BG_TIP, fg=FG_REGION, font=self._font(9),
+                     wraplength=int(220 * self.widget.scale),
+                     justify="left").pack(anchor="w", pady=int(6 * self.widget.scale))
+            return
+        if not propositions:
+            tk.Label(self.content, text="Aucun Pokémon de ce nom.", bg=BG_TIP,
+                     fg=FG_EMPTY, font=self._font(9)).pack(anchor="w",
+                                                           pady=int(6 * self.widget.scale))
+            return
+        grille = tk.Frame(self.content, bg=BG_TIP)
+        grille.pack(anchor="w")
+        for index, english in enumerate(propositions):
+            self._suggestion(grille, english, index // 4, index % 4)
+
+    def _suggestion(self, parent, english: str, row: int, column: int) -> None:
+        scale = self.widget.scale
+        case = tk.Frame(parent, bg=BG_TIP, cursor="hand2")
+        case.grid(row=row, column=column, padx=int(4 * scale), pady=int(3 * scale))
+        sprite = self.widget._sprite(english)
+        if sprite is not None:
+            self.images.append(sprite)
+        icone = tk.Label(case, image=sprite, bg=BG_TIP)
+        icone.pack()
+        nom = tk.Label(case, text=self.widget._label(english), bg=BG_TIP,
+                       fg=FG_LOCATION, font=self._font(8))
+        nom.pack()
+        for cible in (case, icone, nom):
+            cible.bind("<Button-1>", lambda _e, n=english: self._select(n))
+            cible.bind("<Enter>", lambda _e, l=nom: l.configure(fg=FG_HOVER))
+            cible.bind("<Leave>", lambda _e, l=nom: l.configure(fg=FG_LOCATION))
+
+    def _select(self, english: str) -> None:
+        self.current = english
+        self._render_result(english)
+        self.reposition()
+
+    # -- resultat -----------------------------------------------------------
+
+    def _render_result(self, english: str) -> None:
+        scale = self.widget.scale
+        info = self.widget.table.get(english) or {}
+        self._clear()
+
+        colonnes = tk.Frame(self.content, bg=BG_TIP)
+        colonnes.pack(fill="both", expand=True)
+        gauche = tk.Frame(colonnes, bg=BG_TIP)
+        gauche.pack(side="left", anchor="n")
+        droite = tk.Frame(colonnes, bg=BG_TIP)
+        droite.pack(side="left", anchor="n", padx=(int(14 * scale), 0))
+
+        # -- colonne gauche : identite, types, stats
+        entete = tk.Frame(gauche, bg=BG_TIP)
+        entete.pack(anchor="w")
+        tk.Label(entete, text=self.widget._label(english), bg=BG_TIP, fg=FG_VALUE,
+                 font=self._font(11, "bold")).pack(side="left")
+        tk.Label(entete, text=f"  #{info.get('id', 0):03d}", bg=BG_TIP, fg=FG_REGION,
+                 font=self._font(8, "bold")).pack(side="left")
+
+        art = self.widget.artwork(english, (int(76 * scale), int(66 * scale)))
+        if art is not None:
+            self.images.append(art)
+            support = tk.Label(gauche, image=art, bg=BG_TIP)
+            support.pack(anchor="w", pady=(int(2 * scale), 0))
+
+        etiquettes = tk.Frame(gauche, bg=BG_TIP)
+        etiquettes.pack(anchor="w", pady=(int(4 * scale), 0))
+        for kind in info.get("types") or []:
+            tk.Label(etiquettes, text=f" {TYPE_FR.get(kind, kind)} ",
+                     bg=TYPE_COLORS.get(kind, FG_TIMER), fg="#12151c",
+                     font=self._font(8, "bold")).pack(side="left",
+                                                      padx=(0, int(4 * scale)))
+
+        base = info.get("base") or {}
+        grille = tk.Frame(gauche, bg=BG_TIP)
+        grille.pack(anchor="w", pady=(int(6 * scale), 0))
+        largeur = int(74 * scale)
+        for rang, (cle, libelle) in enumerate(STAT_ORDER):
+            valeur = int(base.get(cle, 0))
+            tk.Label(grille, text=libelle, bg=BG_TIP, fg=FG_REGION, anchor="w",
+                     font=self._font(8), width=7).grid(row=rang, column=0, sticky="w")
+            piste = tk.Frame(grille, bg="#252c39", width=largeur, height=int(6 * scale))
+            piste.grid(row=rang, column=1, padx=(0, int(6 * scale)), pady=int(1 * scale))
+            piste.pack_propagate(False)
+            rempli = max(1, int(largeur * min(1.0, valeur / STAT_FULL)))
+            tk.Frame(piste, bg=DetailPanel._stat_color(valeur), width=rempli,
+                     height=int(6 * scale)).place(x=0, y=0, relheight=1.0)
+            tk.Label(grille, text=str(valeur), bg=BG_TIP, fg=FG_VALUE, anchor="e",
+                     font=self._font(8), width=4).grid(row=rang, column=2, sticky="e")
+        if base:
+            tk.Label(grille, text="Total", bg=BG_TIP, fg=FG_REGION, anchor="w",
+                     font=self._font(8, "bold"), width=7).grid(
+                         row=len(STAT_ORDER), column=0, sticky="w")
+            tk.Label(grille, text=str(sum(int(v) for v in base.values())),
+                     bg=BG_TIP, fg=FG_VALUE, anchor="e",
+                     font=self._font(8, "bold"), width=4).grid(
+                         row=len(STAT_ORDER), column=2, sticky="e")
+
+        # -- colonne droite : faiblesses puis contres
+        types = info.get("types") or []
+        tk.Label(droite, text="FAIBLE CONTRE", bg=BG_TIP, fg=FG_TITLE,
+                 font=self._font(8, "bold")).pack(anchor="w")
+        faiblesses = tk.Frame(droite, bg=BG_TIP)
+        faiblesses.pack(anchor="w", pady=(int(3 * scale), 0))
+        trouvees = type_weaknesses(types)
+        if not trouvees:
+            tk.Label(faiblesses, text="aucune", bg=BG_TIP, fg=FG_EMPTY,
+                     font=self._font(8)).pack(side="left")
+        for index, (rapport, kind) in enumerate(trouvees[:6]):
+            tk.Label(faiblesses, text=f" {TYPE_FR.get(kind, kind)} ×{rapport:g} ",
+                     bg=TYPE_COLORS.get(kind, FG_TIMER), fg="#12151c",
+                     font=self._font(8, "bold")).grid(row=index // 3, column=index % 3,
+                                                      padx=(0, int(4 * scale)),
+                                                      pady=int(2 * scale), sticky="w")
+
+        tk.Label(droite, text="MEILLEURS CONTRES", bg=BG_TIP, fg=FG_TITLE,
+                 font=self._font(8, "bold")).pack(anchor="w",
+                                                  pady=(int(9 * scale), 0))
+        liste = tk.Frame(droite, bg=BG_TIP)
+        liste.pack(anchor="w", pady=(int(2 * scale), 0))
+        contres = best_counters(self.widget.table, english, self.MAX_COUNTERS)
+        if not contres:
+            tk.Label(liste, text="aucun contre évident", bg=BG_TIP, fg=FG_EMPTY,
+                     font=self._font(8)).pack(anchor="w")
+        for rang, (_score, donne, recoit, nom) in enumerate(contres):
+            ligne = tk.Frame(liste, bg=BG_TIP, cursor="hand2")
+            ligne.pack(anchor="w", pady=int(1 * scale))
+            sprite = self.widget._sprite(nom)
+            if sprite is not None:
+                self.images.append(sprite)
+            icone = tk.Label(ligne, image=sprite, bg=BG_TIP)
+            icone.pack(side="left")
+            libelle = tk.Label(ligne, text=self.widget._label(nom), bg=BG_TIP,
+                               fg=FG_VALUE, font=self._font(8, "bold"), anchor="w",
+                               width=13)
+            libelle.pack(side="left")
+            tk.Label(ligne, text=f"×{donne:g}", bg=BG_TIP, fg="#3ddc84",
+                     font=self._font(8, "bold"), width=4).pack(side="left")
+            tk.Label(ligne, text=f"×{recoit:g}", bg=BG_TIP,
+                     fg="#d1594f" if recoit > 1 else FG_REGION,
+                     font=self._font(8), width=5).pack(side="left")
+            for cible in (ligne, icone, libelle):
+                cible.bind("<Button-1>", lambda _e, n=nom: self._select(n))
+                cible.bind("<Enter>", lambda _e, l=libelle: l.configure(fg=FG_HOVER))
+                cible.bind("<Leave>", lambda _e, l=libelle: l.configure(fg=FG_VALUE))
+        if contres:
+            tk.Label(droite, text="inflige / encaisse", bg=BG_TIP, fg=FG_EMPTY,
+                     font=self._font(7)).pack(anchor="w", pady=(int(3 * scale), 0))
+
+    # -- placement ----------------------------------------------------------
+
+    def reposition(self) -> None:
+        """Accole le panneau au widget, a la hauteur de celui-ci.
+
+        Meme regle que la fiche Pokedex, a une nuance pres : une largeur
+        minimale est imposee, sinon le panneau se retrecirait a la taille de la
+        seule barre de recherche tant qu'aucune espece n'est choisie.
+        """
+        panel = self.window
+        if panel is None:
+            return
+        root = self.widget.root
+        root.update_idletasks()
+        panel.update_idletasks()
+        main_x, main_y = root.winfo_rootx(), root.winfo_rooty()
+        main_w, main_h = root.winfo_width(), root.winfo_height()
+        largeur = max(panel.winfo_reqwidth(), int(400 * self.widget.scale))
+        left, top, right, bottom = monitor_work_area(
+            self.widget.hwnd or root.winfo_id())
+        place_droite = right - (main_x + main_w)
+        place_gauche = main_x - left
+        if place_droite >= largeur + self.GAP or place_droite >= place_gauche:
+            x = main_x + main_w + self.GAP
+        else:
+            x = main_x - largeur - self.GAP
+        x = max(left, min(x, right - largeur))
+        y = max(top, min(main_y, bottom - main_h))
+        panel.geometry(f"{largeur}x{main_h}+{x}+{y}")
+
+
 class SwarmWidget:
     def __init__(self, root: tk.Tk, feed_queue: queue.Queue, pin: str, opacity: float,
                  lang: str, scale: float, sprite_scale: float = 1.0,
@@ -1086,6 +1506,7 @@ class SwarmWidget:
         self.glow_step = 0
         self.glow_last = (None, None)
         self.panel = DetailPanel(self)
+        self.pokedex = PokedexPanel(self)
         # Cris : muet au lancement, volume repris de la derniere session.
         # _load_state() ajustera le volume avant que le thread ne serve.
         self.cries = CryPlayer()
@@ -1625,6 +2046,16 @@ class SwarmWidget:
         self._render_speaker()
         self.status = tk.Label(header, text="●", bg=BG, fg=FG_EMPTY, font=self._font(9))
         self.status.pack(side="right")
+        # Empile a droite APRES la pastille : avec side="right", le premier
+        # empile est le plus a droite, la loupe se pose donc a sa gauche.
+        self.dex_button = tk.Label(header, text="🔍", bg=BG, fg=FG_REGION,
+                                   cursor="hand2", font=self._font(11, "bold"))
+        self.dex_button.pack(side="right", padx=(0, int(round(8 * self.scale))))
+        self.dex_button.bind("<ButtonRelease-1>", lambda _e: self.pokedex.toggle())
+        self.dex_button.bind("<Enter>",
+                             lambda _e: self.dex_button.configure(fg=FG_HOVER))
+        self.dex_button.bind("<Leave>",
+                             lambda _e: self.dex_button.configure(fg=FG_REGION))
 
         row_index = 1
         for region_number, (key, label) in enumerate(REGIONS):
@@ -1798,8 +2229,9 @@ class SwarmWidget:
         self.position = (event.x_root - self._origin[0], event.y_root - self._origin[1])
         self._place()
         self._save_state()
-        # Panneau et carte restent accoles au widget pendant le deplacement.
+        # Panneaux et carte restent accoles au widget pendant le deplacement.
         self.panel.reposition()
+        self.pokedex.reposition()
         self.place_map()
 
     def _place(self) -> None:

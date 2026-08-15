@@ -22,6 +22,41 @@ que des modèles 3D, `particles.pak` des effets, `atlas/` l'interface. Les
 | `sprite_bbox*.json` — cadrage utile de chaque sprite | calculé localement | 39 Ko |
 | `regions.json` — emprise des 486 lieux | décompilations `pret` + pokebip | 31 Ko |
 
+## Les contres
+
+La table d'efficacité des types est **locale**, comme les couleurs et les
+traductions de types. Seuls les rapports différents de 1 sont écrits.
+
+**Elle est en cinquième génération, pas en sixième** — PokeMMO s'arrête à
+Noir/Blanc. Deux écarts avec la table moderne, et ils comptent :
+
+| | Moderne | PokeMMO (5ᵉ gén.) |
+|---|---|---|
+| Type Fée | existe | **n'existe pas** — une demande d'ajout a été refusée sur le forum du jeu |
+| Acier contre Spectre et Ténèbres | neutre | **résiste** (×0.5) |
+
+Les 22 espèces que la sixième génération a retypées reviennent donc à leurs
+types d'époque : Mélofée redevient Normal, Marill Eau, Mysdibule Acier. Le
+pokédex public utilisé pour les noms donne les types modernes ; `fetch_assets.py`
+lit `past_types` de PokeAPI en `generation-v` pour les corriger — une vingtaine
+d'appels plutôt que 649. La table, elle, a été vérifiée contre
+`past_damage_relations` de PokeAPI pour la même génération.
+
+Le classement des contres retient trois critères, dans cet ordre :
+
+1. **Ce que le candidat inflige** — le meilleur rapport de ses propres types
+   contre la combinaison défensive de la cible. En dessous de ×2, il est écarté.
+2. **Ce qu'il encaisse en retour** — le pire rapport des types de la cible
+   contre les siens.
+3. **Sa meilleure statistique offensive**, avec un appoint de vitesse.
+
+> **Ce que ce classement ignore, et c'est beaucoup.** Faute de données
+> d'attaques, il suppose que chaque espèce porte une attaque de son propre type
+> — hypothèse courante mais pas toujours vraie, et qui passe à côté de toute
+> couverture hors type. Il ne connaît ni les talents, ni les objets, ni les
+> niveaux, ni le moindre contexte de combat. C'est un point de départ de
+> réflexion, pas un verdict compétitif.
+
 ## Les cris
 
 649 cris, environ 8 Ko chacun, **5,0 Mo** au total — téléchargés depuis Pokémon

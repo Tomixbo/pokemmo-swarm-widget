@@ -34,6 +34,7 @@ dans un petit panneau toujours visible, que le jeu tourne ou non.
 | **Cartes de région** | 486 lieux repérés sur les cartes officielles, plus 49 cartes annotées par la communauté |
 | **Alphas signalés** | badge rouge, sprite cerclé de rouge, halo pulsant autour du widget |
 | **Cri du Pokémon** | joué une fois à chaque nouvelle apparition — **muet par défaut**, volume réglable et retenu |
+| **Pokédex de recherche** | cherche une espèce par son nom, montre ses stats et **par quoi la battre** |
 | **Discret** | translucide au repos, opaque au survol, ancrable au bureau ou au premier plan |
 | **Rien sur le disque** | l'état vit en mémoire ; seuls position, échelle et transparence sont retenus |
 | **Aucune dépendance** | bibliothèque standard uniquement, Pillow compris |
@@ -128,6 +129,7 @@ droit administrateur. Pour désactiver : `install_startup.ps1 -Remove`.
 | **Double-clic** sur la carte | agrandit, ou revient à la taille normale |
 | **✕** ou `Échap` | ferme le panneau |
 | Clic sur le **🔇 / 🔊** après le titre | coupe ou rétablit le cri du Pokémon |
+| Clic sur le **🔍** à gauche de la pastille | ouvre le Pokédex de recherche |
 
 Le cri est joué **une fois** à chaque nouvelle apparition. Le widget démarre
 toujours **muet** ; le volume, lui, est retenu d'une session à l'autre. Deux

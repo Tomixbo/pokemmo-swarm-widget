@@ -11,6 +11,35 @@
 
 Elle agrège les flux : elle ne passe au rouge que si **tous** sont tombés.
 
+## Le Pokédex de recherche
+
+Une loupe **🔍** occupe l'en-tête, à gauche de la pastille d'état. Elle ouvre un
+panneau accolé au widget : on y cherche une espèce par son nom, et on voit ses
+statistiques ainsi que par quoi la battre.
+
+- **La recherche est repliée** : ni les accents ni la casse ne comptent, et le
+  nom français comme l'anglais sont acceptés. `electhor`, `Électhor` et
+  `zapdos` mènent au même endroit. Les noms qui *commencent* par la saisie
+  passent devant ceux qui ne font que la contenir — taper `pika` propose
+  Pikachu en premier.
+- **Les propositions** s'affichent en grille, sprite au-dessus du nom. Un clic
+  sélectionne.
+- **Le résultat** tient en deux colonnes : à gauche l'espèce — image, types,
+  six jauges et total ; à droite ses faiblesses de type puis les meilleurs
+  contres. Chaque contre est cliquable, ce qui permet d'enchaîner les
+  consultations.
+- Chaque contre affiche **ce qu'il inflige et ce qu'il encaisse** : `×4 / ×0.5`
+  se lit « frappe quatre fois plus fort, ne subit que la moitié ».
+
+Le panneau est **plus large** que la fiche Pokédex ordinaire — deux colonnes y
+tiennent — mais sa **hauteur reste celle du widget**, comme tous les panneaux.
+C'est pourquoi la recherche et le résultat occupent la même zone plutôt que de
+s'empiler : les trois ensemble déborderaient.
+
+> Le classement des contres est une aide à la réflexion, pas un verdict
+> compétitif. Voir [Sous le capot](sous-le-capot.md#les-contres) pour ce qu'il
+> mesure — et surtout ce qu'il ignore.
+
 ## Le cri du Pokémon
 
 Un haut-parleur suit le titre **ESSAIMS** : 🔇 quand le son est coupé, 🔊 sinon.
