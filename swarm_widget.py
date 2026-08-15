@@ -970,8 +970,7 @@ class PokedexPanel:
     """
 
     GAP = 8
-    MAX_SUGGESTIONS = 8
-    MAX_COUNTERS = 5
+    MAX_COUNTERS = 12       # la liste defile : plus besoin de la tronquer a 5
 
     def __init__(self, widget: "SwarmWidget"):
         self.widget = widget
@@ -981,6 +980,7 @@ class PokedexPanel:
         self.content = None
         self.current = None
         self.origin = None      # evenement d'ou vient l'espece, s'il y en a un
+        self.suspended = False  # gele le rendu pendant qu'on vide le champ
         self.alpha_mode = False
         self.history = []       # especes vues avant, pour le retour en arriere
         self.images = []        # references gardees : sinon Tk vide les images
@@ -1007,7 +1007,9 @@ class PokedexPanel:
         self.alpha_mode = bool(entry and entry.get("kind") == "alpha")
         self.history = []
         if self.query is not None:
+            self.suspended = True
             self.query.set("")
+            self.suspended = False
         self._select(english, remember=False)
 
     def close(self) -> None:
@@ -1020,6 +1022,7 @@ class PokedexPanel:
         self.current = None
         self.origin = None
         self.alpha_mode = False
+        self.suspended = False
         self.history = []
         self.images = []
 
@@ -1066,12 +1069,117 @@ class PokedexPanel:
 
     # -- recherche ----------------------------------------------------------
 
+    def _scroll_indicator(self, boite, toile):
+        """Gouttiere et curseur dessines a la main, poses sur le canevas.
+
+        La Scrollbar de Tk garde le style natif de Windows — large et clair —
+        qui jure avec le panneau. Ici la fraction visible vient de
+        yscrollcommand, que Tk fournit deja.
+        """
+        largeur = max(4, int(round(5 * self.widget.scale)))
+        gouttiere = tk.Frame(boite, bg="#222937")
+        curseur = tk.Frame(gouttiere, bg="#49556b", cursor="hand2")
+        gouttiere.largeur = largeur
+        prise = {"y": 0, "depart": 0.0}
+
+        def saisir(event):
+            prise["y"] = event.y_root
+            prise["depart"] = toile.yview()[0]
+            curseur.configure(bg="#5c6b85")
+
+        def glisser(event):
+            hauteur = max(1, gouttiere.winfo_height())
+            toile.yview_moveto(prise["depart"] + (event.y_root - prise["y"]) / hauteur)
+
+        curseur.bind("<Button-1>", saisir)
+        curseur.bind("<B1-Motion>", glisser)
+        curseur.bind("<ButtonRelease-1>", lambda _e: curseur.configure(bg="#49556b"))
+        return gouttiere, curseur
+
+    @staticmethod
+    def _move_indicator(gouttiere, curseur, premier, dernier) -> None:
+        """Place le curseur, ou efface la gouttiere si tout tient dans le cadre."""
+        haut, bas = float(premier), float(dernier)
+        if bas - haut >= 0.999:
+            gouttiere.place_forget()
+            return
+        gouttiere.place(relx=1.0, rely=0.0, relheight=1.0, anchor="ne",
+                        width=gouttiere.largeur)
+        gouttiere.lift()
+        # Plancher : sur 649 especes le curseur proportionnel ferait un pixel.
+        curseur.place(relx=0.0, relwidth=1.0, rely=haut,
+                      relheight=max(0.05, bas - haut))
+
+    def _scrollable(self, parent):
+        """Zone defilante simple, pour les listes courtes (les contres)."""
+        boite = tk.Frame(parent, bg=BG_TIP)
+        boite.pack(fill="both", expand=True)
+        toile = tk.Canvas(boite, bg=BG_TIP, highlightthickness=0, bd=0)
+        toile.pack(fill="both", expand=True)
+        interieur = tk.Frame(toile, bg=BG_TIP)
+        fenetre = toile.create_window((0, 0), window=interieur, anchor="nw")
+        gouttiere, curseur = self._scroll_indicator(boite, toile)
+        toile.configure(yscrollcommand=lambda a, b: self._move_indicator(
+            gouttiere, curseur, a, b))
+
+        def ajuster(event=None):
+            toile.configure(scrollregion=toile.bbox("all"))
+            if event is not None and getattr(event, "width", 0):
+                # Le cadre epouse la largeur du canevas, MOINS la gouttiere :
+                # posee par-dessus, elle rognait la derniere colonne.
+                toile.itemconfigure(
+                    fenetre, width=max(1, event.width - gouttiere.largeur - 2))
+        interieur.bind("<Configure>", lambda _e: ajuster())
+        toile.bind("<Configure>", ajuster)
+        return interieur
+
+    @staticmethod
+    def _attach_wheel(interieur) -> None:
+        """Lie la molette au cadre ET a toute sa descendance.
+
+        En Tk l'evenement de molette va au widget sous le pointeur, pas au
+        conteneur : sans cette propagation, la liste ne defilerait que si la
+        souris se trouve sur un interstice entre deux cases.
+        """
+        toile = interieur.master
+
+        def molette(event):
+            if toile.winfo_exists():
+                toile.yview_scroll(-1 if event.delta > 0 else 1, "units")
+            return "break"
+
+        pile = [interieur]
+        while pile:
+            widget = pile.pop()
+            widget.bind("<MouseWheel>", molette)
+            pile.extend(widget.winfo_children())
+        toile.bind("<MouseWheel>", molette)
+
+    def _every_species(self) -> list:
+        """Toutes les especes, dans l'ordre du Pokedex."""
+        return sorted(self.widget.table, key=lambda n: self.widget.table[n]["id"])
+
     def _matches(self, text: str) -> list:
-        """Especes dont le nom francais ou anglais contient la saisie.
+        """Especes dont le nom, ou le numero, correspond a la saisie.
 
         Les noms commencant par la saisie passent devant : taper « pika » doit
         proposer Pikachu avant une espece qui ne fait que le contenir.
         """
+        # Recherche par numero : « 475 », « #475 », et « 47 » qui propose 047
+        # puis 470 a 479. Aucun nom d'espece ne contenant de chiffre, une
+        # saisie entierement numerique est sans ambiguite.
+        chiffres = text.strip().lstrip("#").strip()
+        if chiffres.isdigit():
+            exact, prefixe = [], []
+            for english, info in self.widget.table.items():
+                dex = info.get("id", 0)
+                if dex == int(chiffres):
+                    exact.append(english)
+                elif f"{dex:03d}".startswith(chiffres.zfill(min(3, len(chiffres)))):
+                    prefixe.append(english)
+            par_dex = lambda n: self.widget.table[n]["id"]
+            return sorted(exact, key=par_dex) + sorted(prefixe, key=par_dex)
+
         cle = fold(text)
         if not cle:
             return []
@@ -1084,55 +1192,153 @@ class PokedexPanel:
                 dedans.append(english)
         ordre = sorted(debuts, key=lambda n: self.widget.table[n]["id"])
         ordre += sorted(dedans, key=lambda n: self.widget.table[n]["id"])
-        return ordre[:self.MAX_SUGGESTIONS]
+        # Aucun plafond : la liste defile, tronquer priverait de resultats.
+        return ordre
 
     def _clear(self) -> None:
         for enfant in list(self.content.winfo_children()):
             enfant.destroy()
         self.images = []
 
+    COLONNES = 4
+
     def _render_suggestions(self) -> None:
-        if self.content is None:
+        """Liste des especes : resultats de la recherche, ou tout le Pokedex.
+
+        Champ vide = catalogue complet dans l'ordre des numeros.
+        """
+        if self.content is None or self.suspended:
             return
         texte = self.query.get()
-        propositions = self._matches(texte)
-        # Saisie vide : on garde le resultat courant plutot que de vider l'ecran.
-        if not texte.strip() and self.current:
-            return
         self._clear()
         self.current = None
-        if not texte.strip():
-            tk.Label(self.content, text="Cherche un Pokémon par son nom.",
-                     bg=BG_TIP, fg=FG_REGION, font=self._font(9),
-                     wraplength=int(220 * self.widget.scale),
-                     justify="left").pack(anchor="w", pady=int(6 * self.widget.scale))
-            return
-        if not propositions:
+        especes = self._matches(texte) if texte.strip() else self._every_species()
+        if not especes:
             tk.Label(self.content, text="Aucun Pokémon de ce nom.", bg=BG_TIP,
-                     fg=FG_EMPTY, font=self._font(9)).pack(anchor="w",
-                                                           pady=int(6 * self.widget.scale))
+                     fg=FG_LOCATION, font=self._font(9)).pack(
+                         anchor="w", pady=int(6 * self.widget.scale))
             return
-        grille = tk.Frame(self.content, bg=BG_TIP)
-        grille.pack(anchor="w")
-        for index, english in enumerate(propositions):
-            self._suggestion(grille, english, index // 4, index % 4)
+        self._render_grid(self.content, especes)
 
-    def _suggestion(self, parent, english: str, row: int, column: int) -> None:
-        scale = self.widget.scale
-        case = tk.Frame(parent, bg=BG_TIP, cursor="hand2")
-        case.grid(row=row, column=column, padx=int(4 * scale), pady=int(3 * scale))
-        sprite = self.widget._sprite(english)
-        if sprite is not None:
-            self.images.append(sprite)
-        icone = tk.Label(case, image=sprite, bg=BG_TIP)
+    def _cell_size(self) -> tuple[int, int]:
+        """Gabarit d'une case, mesure une fois puis retenu.
+
+        Mesure sur le nom le plus long du catalogue : une case trop etroite
+        rognerait les noms, et la grille virtualisee suppose un pas constant.
+        """
+        if self.widget._cell_probe:
+            return self.widget._cell_probe
+        long = max(self.widget.table, key=lambda n: len(self.widget._label(n)))
+        sonde = tk.Frame(self.window, bg=BG_TIP)
+        self._fill_cell(sonde, long)
+        sonde.update_idletasks()
+        marge = int(8 * self.widget.scale)
+        taille = (sonde.winfo_reqwidth() + marge, sonde.winfo_reqheight() + marge)
+        sonde.destroy()
+        self.widget._cell_probe = taille
+        return taille
+
+    def _fill_cell(self, case, english: str) -> dict:
+        """Construit le contenu d'une case et rend ses parties, pour recyclage."""
+        info = self.widget.table.get(english) or {}
+        cellule = self.widget.cell
+        icone = tk.Label(case, bg=BG_TIP, image=self.widget.blank,
+                         width=cellule[0], height=cellule[1])
         icone.pack()
-        nom = tk.Label(case, text=self.widget._label(english), bg=BG_TIP,
-                       fg=FG_LOCATION, font=self._font(8))
-        nom.pack()
-        for cible in (case, icone, nom):
+        etiquette = tk.Frame(case, bg=BG_TIP)
+        etiquette.pack()
+        numero = tk.Label(etiquette, text=f"#{info.get('id', 0):03d}", bg=BG_TIP,
+                          fg=FG_REGION, font=self._font(7))
+        numero.pack(side="left", padx=(0, int(3 * self.widget.scale)))
+        nom = tk.Label(etiquette, text=self.widget._label(english), bg=BG_TIP,
+                       fg=FG_VALUE, font=self._font(8))
+        nom.pack(side="left")
+        return {"case": case, "icone": icone, "numero": numero, "nom": nom}
+
+    def _render_grid(self, parent, especes: list) -> None:
+        """Grille virtualisee : seules les cases visibles existent.
+
+        Materialiser les 649 especes coutait 3257 widgets Tk — 2,6 s a
+        l'ouverture, 2,3 s a la fermeture, et autant a chaque frappe puisque
+        tout etait detruit puis reconstruit. On ne cree donc qu'un jeu de cases
+        couvrant la zone visible, RECYCLEES au defilement : leur contenu change,
+        les widgets restent. Les sprites ne se chargent qu'a l'affichage, ce qui
+        supprime aussi la seconde de decodage a l'ouverture.
+        """
+        largeur, hauteur = self._cell_size()
+        colonnes = self.COLONNES
+        rangees = (len(especes) + colonnes - 1) // colonnes
+
+        boite = tk.Frame(parent, bg=BG_TIP)
+        boite.pack(fill="both", expand=True)
+        toile = tk.Canvas(boite, bg=BG_TIP, highlightthickness=0, bd=0)
+        toile.pack(fill="both", expand=True)
+        interieur = tk.Frame(toile, bg=BG_TIP, width=largeur * colonnes,
+                             height=hauteur * rangees)
+        toile.create_window((0, 0), window=interieur, anchor="nw")
+        toile.configure(scrollregion=(0, 0, largeur * colonnes, hauteur * rangees))
+
+        gouttiere, curseur = self._scroll_indicator(boite, toile)
+        pool: list = []
+        etat = {"vue": None}
+
+        def afficher(_event=None):
+            """Recycle les cases sur la fenetre visible."""
+            vue = int(toile.canvasy(0) // hauteur)
+            visibles = max(1, toile.winfo_height() // hauteur + 2)
+            besoin = visibles * colonnes
+            while len(pool) < besoin:
+                case = tk.Frame(interieur, bg=BG_TIP, cursor="hand2")
+                pool.append(self._fill_cell(case, especes[0]))
+            # Le garde-fou doit tenir compte de la TAILLE du vivier, pas
+            # seulement de la rangee : au premier appel le canevas mesure encore
+            # un pixel, le vivier ne couvre que deux rangees, et sans cela les
+            # cases ajoutees a la vraie taille n'etaient jamais placees.
+            if etat["vue"] == (vue, len(pool)):
+                return
+            etat["vue"] = (vue, len(pool))
+            for index, parts in enumerate(pool):
+                rang, colonne = divmod(index, colonnes)
+                position = (vue + rang) * colonnes + colonne
+                if position >= len(especes):
+                    parts["case"].place_forget()
+                    continue
+                self._retarget(parts, especes[position])
+                # Taille imposee, pas seulement l'origine : sans cela la case
+                # epouse son contenu, et le sprite se centre dans une boite plus
+                # ou moins large selon la longueur du nom — « Abo » et
+                # « Rattata » se retrouvaient decales de leurs voisins.
+                parts["case"].place(x=colonne * largeur, y=(vue + rang) * hauteur,
+                                    width=largeur, height=hauteur)
+
+        def defiler(premier, dernier):
+            self._move_indicator(gouttiere, curseur, premier, dernier)
+            afficher()
+        toile.configure(yscrollcommand=defiler)
+        toile.bind("<Configure>", afficher)
+
+        def molette(event):
+            toile.yview_scroll(-1 if event.delta > 0 else 1, "units")
+            return "break"
+        for cible in (toile, interieur):
+            cible.bind("<MouseWheel>", molette)
+        self._wheel = molette
+        toile.update_idletasks()
+        afficher()
+
+    def _retarget(self, parts: dict, english: str) -> None:
+        """Reaffecte une case existante a une autre espece."""
+        info = self.widget.table.get(english) or {}
+        sprite = self.widget._sprite(english)
+        parts["icone"].configure(image=sprite)
+        parts["icone"].image = sprite
+        parts["numero"].configure(text=f"#{info.get('id', 0):03d}")
+        parts["nom"].configure(text=self.widget._label(english), fg=FG_VALUE)
+        for cible in (parts["case"], parts["icone"], parts["numero"], parts["nom"]):
             cible.bind("<Button-1>", lambda _e, n=english: self._select(n))
-            cible.bind("<Enter>", lambda _e, l=nom: l.configure(fg=FG_HOVER))
-            cible.bind("<Leave>", lambda _e, l=nom: l.configure(fg=FG_LOCATION))
+            cible.bind("<Enter>", lambda _e, l=parts["nom"]: l.configure(fg=FG_HOVER))
+            cible.bind("<Leave>", lambda _e, l=parts["nom"]: l.configure(fg=FG_VALUE))
+            cible.bind("<MouseWheel>", self._wheel)
 
     def alpha_ability(self, english: str) -> str | None:
         """Capacite figee de l'alpha de cette espece, si elle en a une.
@@ -1204,7 +1410,8 @@ class PokedexPanel:
         gauche = tk.Frame(colonnes, bg=BG_TIP)
         gauche.pack(side="left", anchor="n")
         droite = tk.Frame(colonnes, bg=BG_TIP)
-        droite.pack(side="left", anchor="n", padx=(int(14 * scale), 0))
+        droite.pack(side="left", fill="both", expand=True,
+                    padx=(int(14 * scale), 0))
 
         # -- colonne gauche : identite, types, stats
         entete = tk.Frame(gauche, bg=BG_TIP)
@@ -1249,7 +1456,9 @@ class PokedexPanel:
         if art is not None:
             self.images.append(art)
             support = tk.Label(gauche, image=art, bg=BG_TIP)
-            support.pack(anchor="w", pady=(int(2 * scale), 0))
+            # fill="x" plutot qu'un ancrage a gauche : l'etiquette occupe toute
+            # la colonne et centre l'image dessus, au lieu de la coller au bord.
+            support.pack(fill="x", pady=(int(2 * scale), 0))
 
         etiquettes = tk.Frame(gauche, bg=BG_TIP)
         etiquettes.pack(anchor="w", pady=(int(4 * scale), 0))
@@ -1340,8 +1549,11 @@ class PokedexPanel:
         tk.Label(droite, text="POUR LE BATTRE, ENVOIE", bg=BG_TIP, fg=FG_REGION,
                  font=self._font(8, "bold")).pack(anchor="w",
                                                   pady=(int(6 * scale), 0))
-        liste = tk.Frame(droite, bg=BG_TIP)
-        liste.pack(anchor="w", pady=(int(2 * scale), 0))
+        # Le classement peut compter une douzaine d'entrees : la zone defile
+        # plutot que de pousser le reste hors du cadre, dont la hauteur est
+        # celle du widget.
+        liste = self._scrollable(droite)
+        liste.grid_columnconfigure(1, weight=1)
         contres = best_counters(self.widget.table, english, self.MAX_COUNTERS)
         if not contres:
             tk.Label(liste, text="Sans faiblesse de type, ce classement\n"
@@ -1381,6 +1593,8 @@ class PokedexPanel:
                 cible.bind("<Button-1>", lambda _e, n=nom: self._select(n))
                 cible.bind("<Enter>", lambda _e, l=libelle: l.configure(fg=FG_HOVER))
                 cible.bind("<Leave>", lambda _e, l=libelle: l.configure(fg=FG_VALUE))
+        liste.update_idletasks()
+        self._attach_wheel(liste)
 
     # -- placement ----------------------------------------------------------
 
@@ -1399,7 +1613,12 @@ class PokedexPanel:
         panel.update_idletasks()
         main_x, main_y = root.winfo_rootx(), root.winfo_rooty()
         main_w, main_h = root.winfo_width(), root.winfo_height()
-        largeur = max(panel.winfo_reqwidth(), int(400 * self.widget.scale))
+        # Largeur FIXE, identique en recherche et en fiche : elle vaut celle de
+        # la grille (quatre cases). Sans cela le panneau changeait de largeur
+        # d'une vue a l'autre, et la fiche laissait un grand vide a droite.
+        case, _hauteur = self._cell_size()
+        largeur = max(case * self.COLONNES + int(30 * self.widget.scale),
+                      int(400 * self.widget.scale))
         left, top, right, bottom = monitor_work_area(
             self.widget.hwnd or root.winfo_id())
         place_droite = right - (main_x + main_w)
@@ -1437,6 +1656,9 @@ class SwarmWidget:
         self.glow_step = 0
         self.glow_last = (None, None)
         self.pokedex = PokedexPanel(self)
+        # Gabarit d'une case du Pokedex, mesure une fois : il fixe aussi la
+        # largeur du panneau, identique en recherche et en fiche.
+        self._cell_probe = None
         # Cris : muet au lancement, volume repris de la derniere session.
         # _load_state() ajustera le volume avant que le thread ne serve.
         self.cries = CryPlayer()
