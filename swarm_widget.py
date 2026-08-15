@@ -800,6 +800,30 @@ class TrayIcon(threading.Thread):
         return user32.DefWindowProcW(hwnd, msg, wparam, lparam)
 
     def _show_menu(self, hwnd):
+        """Ouvre le menu, et le rouvre tant qu'on regle quelque chose.
+
+        Un menu Windows se referme des qu'on choisit une entree. Pour des
+        reglages par pas — agrandir de 10 %, monter le son — cela obligeait a
+        refaire un clic droit sur l'icone entre chaque cran. On rouvre donc le
+        menu au meme point d'ancrage : l'entree choisie se retrouve exactement
+        sous le curseur, et un second clic au meme endroit applique un pas de
+        plus. Seuls « Afficher / masquer » et « Quitter » referment vraiment,
+        ainsi qu'Echap ou un clic a cote.
+
+        Le menu etant reconstruit a chaque tour, les coches et les valeurs
+        courantes se mettent a jour au fur et a mesure des crans.
+        """
+        point = wintypes.POINT()
+        user32.GetCursorPos(ctypes.byref(point))
+        while True:
+            choice = self._popup(hwnd, point.x, point.y)
+            if not choice:                  # Echap, ou clic en dehors
+                return
+            if not self._apply(choice):
+                return
+
+    def _popup(self, hwnd, x, y):
+        """Affiche le menu et rend l'identifiant choisi (0 si abandon)."""
         current = self.get_pin()
         menu = user32.CreatePopupMenu()
         user32.AppendMenuW(menu, MF_STRING | (MF_CHECKED if current == "top" else 0),
@@ -830,14 +854,15 @@ class TrayIcon(threading.Thread):
         user32.AppendMenuW(menu, MF_SEPARATOR, 0, None)
         user32.AppendMenuW(menu, MF_STRING, ID_QUIT, "Quitter")
 
-        point = wintypes.POINT()
-        user32.GetCursorPos(ctypes.byref(point))
         # Sans cet appel le menu ne se referme pas quand on clique ailleurs.
         user32.SetForegroundWindow(hwnd)
         choice = user32.TrackPopupMenu(
-            menu, TPM_RIGHTBUTTON | TPM_RETURNCMD, point.x, point.y, 0, hwnd, None)
+            menu, TPM_RIGHTBUTTON | TPM_RETURNCMD, x, y, 0, hwnd, None)
         user32.DestroyMenu(menu)
+        return choice
 
+    def _apply(self, choice):
+        """Execute l'entree choisie. Rend True si le menu doit rester ouvert."""
         if choice == ID_TOGGLE:
             self.on_toggle()
         elif choice == ID_QUIT:
@@ -866,6 +891,8 @@ class TrayIcon(threading.Thread):
             self.on_volume(-0.1, None)
         elif choice == ID_VOL_RESET:
             self.on_volume(None, DEFAULT_VOLUME)
+        # Tout le reste est un reglage : on garde le menu sous la main.
+        return choice not in (ID_TOGGLE, ID_QUIT)
 
     def run(self) -> None:
         cls = WNDCLASSW()
@@ -2622,6 +2649,11 @@ class SwarmWidget:
         target = min(3.0, max(0.5, round(target, 3)))
         if abs(target - self.scale) < 1e-3:
             return
+        # L'echelle est retenue tout de suite, seule la reconstruction est
+        # differee au thread Tk : le menu de l'icone se rouvre avant que
+        # celui-ci n'ait repris la main, et deux crans d'affilee doivent se
+        # cumuler au lieu de repartir deux fois de la meme valeur.
+        self.scale = target
         self.root.after(0, lambda: self._rebuild(target))
 
     def _rebuild(self, scale: float) -> None:
