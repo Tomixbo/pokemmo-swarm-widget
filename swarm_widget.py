@@ -1202,8 +1202,10 @@ class PokedexPanel:
         self.widget = widget
         self.window = None
         self.query = None
+        self.entry = None
         self.content = None
         self.current = None
+        self.history = []       # especes vues avant, pour le retour en arriere
         self.images = []        # references gardees : sinon Tk vide les images
 
     def toggle(self) -> None:
@@ -1218,7 +1220,9 @@ class PokedexPanel:
             self.window = None
         self.content = None
         self.query = None
+        self.entry = None
         self.current = None
+        self.history = []
         self.images = []
 
     def _font(self, size, weight="normal"):
@@ -1250,13 +1254,13 @@ class PokedexPanel:
         close.bind("<Leave>", lambda _e: close.configure(fg=FG_EMPTY))
 
         self.query = tk.StringVar()
-        champ = tk.Entry(body, textvariable=self.query, bg="#252c39", fg=FG_VALUE,
-                         insertbackground=FG_VALUE, relief="flat",
-                         font=self._font(10))
-        champ.pack(fill="x", pady=(int(8 * scale), int(6 * scale)),
-                   ipady=int(3 * scale))
+        self.entry = tk.Entry(body, textvariable=self.query, bg="#252c39",
+                              fg=FG_VALUE, insertbackground=FG_VALUE,
+                              relief="flat", font=self._font(10))
+        self.entry.pack(fill="x", pady=(int(8 * scale), int(6 * scale)),
+                        ipady=int(3 * scale))
         self.query.trace_add("write", lambda *_: self._render_suggestions())
-        champ.focus_set()
+        self.entry.focus_set()
 
         self.content = tk.Frame(body, bg=BG_TIP)
         self.content.pack(fill="both", expand=True)
@@ -1334,9 +1338,28 @@ class PokedexPanel:
             cible.bind("<Enter>", lambda _e, l=nom: l.configure(fg=FG_HOVER))
             cible.bind("<Leave>", lambda _e, l=nom: l.configure(fg=FG_LOCATION))
 
-    def _select(self, english: str) -> None:
+    def _select(self, english: str, remember: bool = True) -> None:
+        """Affiche une espece. `remember` empile la precedente pour le retour."""
+        if remember and self.current and self.current != english:
+            self.history.append(self.current)
         self.current = english
         self._render_result(english)
+        # Le clic a emporte le focus sur une etiquette : sans ce rappel, taper
+        # dans le champ de recherche ne declenchait plus rien et l'on restait
+        # bloque sur la fiche atteinte depuis un contre.
+        if self.entry is not None:
+            self.entry.focus_set()
+        self.reposition()
+
+    def _back(self) -> None:
+        """Revient a l'espece precedente, ou a la liste des suggestions."""
+        if self.history:
+            self._select(self.history.pop(), remember=False)
+            return
+        self.current = None
+        self._render_suggestions()
+        if self.entry is not None:
+            self.entry.focus_set()
         self.reposition()
 
     # -- resultat -----------------------------------------------------------
@@ -1356,6 +1379,14 @@ class PokedexPanel:
         # -- colonne gauche : identite, types, stats
         entete = tk.Frame(gauche, bg=BG_TIP)
         entete.pack(anchor="w")
+        # Toujours propose : soit il remonte la chaine des contres consultes,
+        # soit il ramene a la liste des suggestions.
+        retour = tk.Label(entete, text="← ", bg=BG_TIP, fg=FG_LINK,
+                          font=self._font(11, "bold"), cursor="hand2")
+        retour.pack(side="left")
+        retour.bind("<Button-1>", lambda _e: self._back())
+        retour.bind("<Enter>", lambda _e: retour.configure(fg=FG_HOVER))
+        retour.bind("<Leave>", lambda _e: retour.configure(fg=FG_LINK))
         tk.Label(entete, text=self.widget._label(english), bg=BG_TIP, fg=FG_VALUE,
                  font=self._font(11, "bold")).pack(side="left")
         tk.Label(entete, text=f"  #{info.get('id', 0):03d}", bg=BG_TIP, fg=FG_REGION,
@@ -1408,7 +1439,11 @@ class PokedexPanel:
         faiblesses.pack(anchor="w", pady=(int(3 * scale), 0))
         trouvees = type_weaknesses(types)
         if not trouvees:
-            tk.Label(faiblesses, text="aucune", bg=BG_TIP, fg=FG_EMPTY,
+            # Spectre/Tenebres n'a aucune faiblesse en cinquieme generation :
+            # seul le type Fee, absent de PokeMMO, lui en donne une.
+            tk.Label(faiblesses, text="aucune — aucun type ne le frappe\n"
+                                      "en super-efficace",
+                     bg=BG_TIP, fg=FG_TIMER, justify="left",
                      font=self._font(8)).pack(side="left")
         for index, (rapport, kind) in enumerate(trouvees[:6]):
             tk.Label(faiblesses, text=f" {TYPE_FR.get(kind, kind)} ×{rapport:g} ",
@@ -1424,7 +1459,10 @@ class PokedexPanel:
         liste.pack(anchor="w", pady=(int(2 * scale), 0))
         contres = best_counters(self.widget.table, english, self.MAX_COUNTERS)
         if not contres:
-            tk.Label(liste, text="aucun contre évident", bg=BG_TIP, fg=FG_EMPTY,
+            tk.Label(liste, text="Sans faiblesse de type, ce classement\n"
+                                 "n'a rien à proposer : il ne retient que\n"
+                                 "les espèces frappant en super-efficace.",
+                     bg=BG_TIP, fg=FG_TIMER, justify="left",
                      font=self._font(8)).pack(anchor="w")
         for rang, (_score, donne, recoit, nom) in enumerate(contres):
             ligne = tk.Frame(liste, bg=BG_TIP, cursor="hand2")

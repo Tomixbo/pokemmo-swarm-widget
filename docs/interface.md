@@ -28,6 +28,10 @@ statistiques ainsi que par quoi la battre.
   six jauges et total ; à droite ses faiblesses de type puis les meilleurs
   contres. Chaque contre est cliquable, ce qui permet d'enchaîner les
   consultations.
+- **Un bouton ←** remonte la chaîne : il ramène à l'espèce d'où l'on vient, et
+  une fois en haut, à la liste des suggestions. Sans lui, partir d'un Pokémon
+  puis cliquer un de ses contres était un aller sans retour — il fallait
+  retaper le nom de départ.
 - Chaque contre affiche **ce qu'il inflige et ce qu'il encaisse** : `×4 / ×0.5`
   se lit « frappe quatre fois plus fort, ne subit que la moitié ».
 

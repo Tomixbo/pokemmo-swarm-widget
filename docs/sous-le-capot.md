@@ -57,6 +57,13 @@ Le classement des contres retient trois critères, dans cet ordre :
 > niveaux, ni le moindre contexte de combat. C'est un point de départ de
 > réflexion, pas un verdict compétitif.
 
+**Deux espèces n'ont aucun contre**, et c'est correct : Spiritomb et Ténéfix
+sont Spectre/Ténèbres, une combinaison qu'**aucun type ne frappe en
+super-efficace** en cinquième génération. Ils sont même immunisés au Normal, au
+Combat et au Psy. C'est précisément le type Fée qui leur a donné une faiblesse
+en sixième — et il n'existe pas dans PokeMMO. Le panneau l'explique plutôt que
+d'afficher une liste vide.
+
 ## Les cris
 
 649 cris, environ 8 Ko chacun, **5,0 Mo** au total — téléchargés depuis Pokémon
