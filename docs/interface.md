@@ -32,8 +32,10 @@ statistiques ainsi que par quoi la battre.
   une fois en haut, à la liste des suggestions. Sans lui, partir d'un Pokémon
   puis cliquer un de ses contres était un aller sans retour — il fallait
   retaper le nom de départ.
-- Chaque contre affiche **ce qu'il inflige et ce qu'il encaisse** : `×4 / ×0.5`
-  se lit « frappe quatre fois plus fort, ne subit que la moitié ».
+- **Le sens de la liste** : ce sont les Pokémon à **envoyer contre** celui que
+  l'on consulte, pas ceux qu'il bat. Le Pokémon consulté est l'adversaire.
+  `inflige ×4 / subit ×0.5` se lit donc « celui-ci lui met quatre fois plus,
+  et ne prend que la moitié en retour ».
 
 Le panneau est **plus large** que les autres — deux colonnes y tiennent — mais
 sa **hauteur reste celle du widget**, comme eux.

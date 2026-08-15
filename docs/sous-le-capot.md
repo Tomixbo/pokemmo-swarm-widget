@@ -42,7 +42,9 @@ lit `past_types` de PokeAPI en `generation-v` pour les corriger — une vingtain
 d'appels plutôt que 649. La table, elle, a été vérifiée contre
 `past_damage_relations` de PokeAPI pour la même génération.
 
-Le classement des contres retient trois critères, dans cet ordre :
+Le classement répond à une question précise : **que faut-il envoyer pour
+battre cette espèce ?** L'espèce consultée est l'adversaire, jamais la
+proie. Trois critères, dans cet ordre :
 
 1. **Ce que le candidat inflige** — le meilleur rapport de ses propres types
    contre la combinaison défensive de la cible. En dessous de ×2, il est écarté.

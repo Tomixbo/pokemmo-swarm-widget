@@ -1337,7 +1337,7 @@ class PokedexPanel:
                                                       padx=(0, int(4 * scale)),
                                                       pady=int(1 * scale), sticky="w")
 
-        tk.Label(droite, text="MEILLEURS CONTRES", bg=BG_TIP, fg=FG_REGION,
+        tk.Label(droite, text="POUR LE BATTRE, ENVOIE", bg=BG_TIP, fg=FG_REGION,
                  font=self._font(8, "bold")).pack(anchor="w",
                                                   pady=(int(6 * scale), 0))
         liste = tk.Frame(droite, bg=BG_TIP)
@@ -1357,7 +1357,7 @@ class PokedexPanel:
             tk.Label(liste, text="inflige", bg=BG_TIP, fg=FG_REGION,
                      font=self._font(7)).grid(row=0, column=2, sticky="e",
                                               padx=(int(6 * scale), 0))
-            tk.Label(liste, text="encaisse", bg=BG_TIP, fg=FG_REGION,
+            tk.Label(liste, text="subit", bg=BG_TIP, fg=FG_REGION,
                      font=self._font(7)).grid(row=0, column=3, sticky="e",
                                               padx=(int(5 * scale), 0))
         for rang, (_score, donne, recoit, nom) in enumerate(contres, start=1):
