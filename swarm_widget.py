@@ -1247,11 +1247,13 @@ class PokedexPanel:
         icone.pack()
         etiquette = tk.Frame(case, bg=BG_TIP)
         etiquette.pack()
+        # padx=0 sur les etiquettes : Tk en met 1 de chaque cote par defaut,
+        # qui s'ajoutait a l'ecart du pack et eloignait le numero du nom.
         numero = tk.Label(etiquette, text=f"#{info.get('id', 0):03d}", bg=BG_TIP,
-                          fg=FG_REGION, font=self._font(7))
-        numero.pack(side="left", padx=(0, int(3 * self.widget.scale)))
+                          fg=FG_REGION, font=self._font(7), padx=0)
+        numero.pack(side="left", padx=(0, max(1, int(2 * self.widget.scale))))
         nom = tk.Label(etiquette, text=self.widget._label(english), bg=BG_TIP,
-                       fg=FG_VALUE, font=self._font(8))
+                       fg=FG_VALUE, font=self._font(8), padx=0)
         nom.pack(side="left")
         return {"case": case, "icone": icone, "numero": numero, "nom": nom}
 
