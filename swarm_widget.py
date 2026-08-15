@@ -1576,8 +1576,12 @@ class PokedexPanel:
             sprite = self.widget._sprite(nom)
             if sprite is not None:
                 self.images.append(sprite)
-            icone = tk.Label(liste, image=sprite, bg=BG_TIP, cursor="hand2")
-            icone.grid(row=rang, column=0, sticky="w")
+            # Boite de taille fixe : les sprites n'ont pas tous la meme
+            # largeur, et cales a gauche ils se decalaient d'une ligne a
+            # l'autre. Le Label centre son image dans la boite.
+            icone = tk.Label(liste, image=sprite, bg=BG_TIP, cursor="hand2",
+                             width=self.widget.cell[0])
+            icone.grid(row=rang, column=0)
             libelle = tk.Label(liste, text=self.widget._label(nom), bg=BG_TIP,
                                fg=FG_VALUE, font=self._font(8, "bold"),
                                anchor="w", width=13, cursor="hand2")
