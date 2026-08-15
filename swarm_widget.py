@@ -1318,7 +1318,7 @@ class PokedexPanel:
 
         # -- colonne droite : faiblesses puis contres
         types = info.get("types") or []
-        tk.Label(droite, text="FAIBLE CONTRE", bg=BG_TIP, fg=FG_TITLE,
+        tk.Label(droite, text="FAIBLE CONTRE", bg=BG_TIP, fg=FG_REGION,
                  font=self._font(8, "bold")).pack(anchor="w")
         faiblesses = tk.Frame(droite, bg=BG_TIP)
         faiblesses.pack(anchor="w", pady=(int(2 * scale), 0))
@@ -1328,7 +1328,7 @@ class PokedexPanel:
             # seul le type Fee, absent de PokeMMO, lui en donne une.
             tk.Label(faiblesses, text="aucune — aucun type ne le frappe\n"
                                       "en super-efficace",
-                     bg=BG_TIP, fg=FG_TIMER, justify="left",
+                     bg=BG_TIP, fg=FG_LOCATION, justify="left",
                      font=self._font(8)).pack(side="left")
         for index, (rapport, kind) in enumerate(trouvees[:6]):
             tk.Label(faiblesses, text=f" {TYPE_FR.get(kind, kind)} ×{rapport:g} ",
@@ -1337,7 +1337,7 @@ class PokedexPanel:
                                                       padx=(0, int(4 * scale)),
                                                       pady=int(1 * scale), sticky="w")
 
-        tk.Label(droite, text="MEILLEURS CONTRES", bg=BG_TIP, fg=FG_TITLE,
+        tk.Label(droite, text="MEILLEURS CONTRES", bg=BG_TIP, fg=FG_REGION,
                  font=self._font(8, "bold")).pack(anchor="w",
                                                   pady=(int(6 * scale), 0))
         liste = tk.Frame(droite, bg=BG_TIP)
@@ -1347,17 +1347,17 @@ class PokedexPanel:
             tk.Label(liste, text="Sans faiblesse de type, ce classement\n"
                                  "n'a rien à proposer : il ne retient que\n"
                                  "les espèces frappant en super-efficace.",
-                     bg=BG_TIP, fg=FG_TIMER, justify="left",
+                     bg=BG_TIP, fg=FG_LOCATION, justify="left",
                      font=self._font(8)).pack(anchor="w")
         # Tableau invisible plutot qu'une ligne par contre : en pack(), chaque
         # rangee se calait sur la largeur de son propre nom, si bien que les
         # coefficients ne s'alignaient ni entre eux, ni sous leur libelle. La
         # grille leur donne deux colonnes propres et pose l'en-tete dessus.
         if contres:
-            tk.Label(liste, text="inflige", bg=BG_TIP, fg=FG_EMPTY,
+            tk.Label(liste, text="inflige", bg=BG_TIP, fg=FG_REGION,
                      font=self._font(7)).grid(row=0, column=2, sticky="e",
                                               padx=(int(6 * scale), 0))
-            tk.Label(liste, text="encaisse", bg=BG_TIP, fg=FG_EMPTY,
+            tk.Label(liste, text="encaisse", bg=BG_TIP, fg=FG_REGION,
                      font=self._font(7)).grid(row=0, column=3, sticky="e",
                                               padx=(int(5 * scale), 0))
         for rang, (_score, donne, recoit, nom) in enumerate(contres, start=1):
