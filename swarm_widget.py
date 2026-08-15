@@ -2639,6 +2639,10 @@ class SwarmWidget:
             self.map_window = None
         self.hovered = None
         self.sprites.clear()      # les sprites sont mis a l'echelle de la cellule
+        # Le gabarit des cases du Pokedex depend lui aussi de l'echelle : le
+        # garder reviendrait a dessiner la grille avec les mesures de l'ancienne,
+        # cases trop etroites et noms qui mordent sur la colonne voisine.
+        self._cell_probe = None
         self.rows.clear()
         self.glow_last = (None, None)
         self._last_render = ""
