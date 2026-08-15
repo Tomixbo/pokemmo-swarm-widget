@@ -945,242 +945,17 @@ def pin_to_desktop(hwnd: int) -> bool:
 # --- Widget ---------------------------------------------------------------
 
 
-class DetailPanel:
-    """Fiche Pokedex ouverte au clic, accolee au widget.
-
-    Fenetre a part (Toplevel) plutot que dessin dans le widget : elle peut ainsi
-    se placer a cote sans changer la taille du widget, et rester visible meme
-    quand celui-ci est ancre au bureau.
-    """
-
-    GAP = 8  # ecart avec le widget, en pixels
-
-    def __init__(self, widget: "SwarmWidget"):
-        self.widget = widget
-        self.window = None
-        self.current = None
-        self.origin = None      # evenement affiche : type, region, lieu
-
-    def toggle(self, english: str, entry: dict | None = None) -> None:
-        """Un clic sur le meme Pokemon referme le panneau."""
-        if self.window is not None and self.current == english:
-            self.close()
-        else:
-            self.show(english, entry)
-
-    def close(self) -> None:
-        if self.window is not None:
-            self.window.destroy()
-            self.window = None
-        self.current = None
-        self.origin = None
-
-    # -- rendu --------------------------------------------------------------
-
-    def show(self, english: str, entry: dict | None = None) -> None:
-        info = self.widget.table.get(english)
-        if not info:
-            return
-        self.close()
-        # Les deux panneaux occupent le meme emplacement : ouvrir l'un doit
-        # fermer l'autre, sinon ils se superposent.
-        self.widget.pokedex.close()
-        self.current = english
-        self.origin = entry
-
-        scale = self.widget.scale
-        def font(size, weight="normal"):
-            return ("Segoe UI", max(7, int(round(size * scale))), weight)
-
-        panel = tk.Toplevel(self.widget.root)
-        panel.overrideredirect(True)
-        panel.attributes("-topmost", self.widget.pin == "top")
-        panel.attributes("-alpha", self.widget.opacity)
-        panel.configure(bg="#2a3140")          # sert de fine bordure
-        self.window = panel
-
-        body = tk.Frame(panel, bg=BG_TIP, padx=int(14 * scale), pady=int(12 * scale))
-        body.pack(fill="both", expand=True, padx=1, pady=1)
-
-        # -- en-tete : nom, numero, et croix de fermeture
-        head = tk.Frame(body, bg=BG_TIP)
-        head.pack(fill="x")
-        tk.Label(head, text=self.widget._label(english), bg=BG_TIP, fg=FG_VALUE,
-                 font=font(12, "bold")).pack(side="left")
-        # Numero bien lisible, suivi de l'icone de lien : le libelle texte en
-        # bas de panneau se faisait couper quand le widget etait court.
-        tk.Label(head, text=f"  #{info['id']:03d}", bg=BG_TIP, fg=FG_REGION,
-                 font=font(9, "bold")).pack(side="left")
-        url = POKEDEX_URL.format(dex=info["id"])
-        goto = tk.Label(head, text=" ↗", bg=BG_TIP, fg=FG_LINK,
-                        font=font(10, "bold"), cursor="hand2")
-        goto.pack(side="left")
-        goto.bind("<Button-1>", lambda _event: webbrowser.open(url))
-        goto.bind("<Enter>", lambda _e: goto.configure(fg=FG_HOVER))
-        goto.bind("<Leave>", lambda _e: goto.configure(fg=FG_LINK))
-
-        # Carte du lieu, dans l'en-tete : une ligne dediee poussait la capacite
-        # hors du panneau, deja a la hauteur du widget.
-        card = (self.widget.map_for(entry.get("region", ""), entry.get("location", ""))
-                if entry else None)
-        if card:
-            atlas = tk.Label(head, text=" 🗺", bg=BG_TIP, fg=FG_LINK,
-                             font=font(9, "bold"), cursor="hand2")
-            atlas.pack(side="left")
-            place = entry.get("location", "")
-            atlas.bind("<Button-1>", lambda _e, c=card, t=place: self.widget.show_map(c, t))
-            atlas.bind("<Enter>", lambda _e: atlas.configure(fg=FG_HOVER))
-            atlas.bind("<Leave>", lambda _e: atlas.configure(fg=FG_LINK))
-        close = tk.Label(head, text="✕", bg=BG_TIP, fg=FG_EMPTY,
-                         font=font(10, "bold"), cursor="hand2")
-        close.pack(side="right")
-        close.bind("<Button-1>", lambda _event: self.close())
-        close.bind("<Enter>", lambda _e: close.configure(fg=FG_VALUE))
-        close.bind("<Leave>", lambda _e: close.configure(fg=FG_EMPTY))
-
-        # -- grande image, centree sous l'en-tete
-        is_alpha = bool(entry and entry.get("kind") == "alpha")
-        art = self.widget.artwork(
-            english, (int(PANEL_ART_BOX[0] * scale), int(PANEL_ART_BOX[1] * scale)),
-            alpha=is_alpha)
-        if art is not None:
-            holder = tk.Label(body, image=art, bg=BG_TIP)
-            holder.image = art          # reference gardee : sinon vidage
-            holder.pack(pady=(int(6 * scale), 0))
-
-        # -- rarete puis types, sur la meme ligne
-        tags = tk.Frame(body, bg=BG_TIP)
-        tags.pack(anchor="w", pady=(int(8 * scale), 0))
-
-        # Le panneau est la vue detaillee : il montre le bareme meme quand la
-        # ligne n'affiche que le rang. Mais si la rarete est masquee, elle l'est
-        # partout.
-        tier = None if self.widget.rarity == "none" else self.widget._tier_of(english, {})
-        if tier is not None:
-            points = self.widget.tier_points.get(tier)
-            text = f"T{tier}" + (f" · {points} pts" if points else "")
-            tk.Label(tags, text=f" {text} ", bg=TIER_COLORS.get(tier, FG_TIMER),
-                     fg="#12151c", font=font(8, "bold")).pack(
-                         side="left", padx=(0, int(6 * scale)))
-
-        for kind in info.get("types") or []:
-            tk.Label(tags, text=f" {TYPE_FR.get(kind, kind)} ",
-                     bg=TYPE_COLORS.get(kind, FG_TIMER), fg="#12151c",
-                     font=font(8, "bold")).pack(side="left", padx=(0, int(5 * scale)))
-
-        # -- jauges de stats
-        base = info.get("base") or {}
-        if base:
-            grid = tk.Frame(body, bg=BG_TIP)
-            grid.pack(anchor="w", pady=(int(9 * scale), 0))
-            bar_width = int(110 * scale)
-            for row, (key, label) in enumerate(STAT_ORDER):
-                value = int(base.get(key, 0))
-                tk.Label(grid, text=label, bg=BG_TIP, fg=FG_REGION, anchor="w",
-                         font=font(8), width=7).grid(row=row, column=0, sticky="w")
-                track = tk.Frame(grid, bg="#252c39", width=bar_width,
-                                 height=int(7 * scale))
-                track.grid(row=row, column=1, padx=(0, int(8 * scale)),
-                           pady=int(2 * scale))
-                track.pack_propagate(False)
-                filled = max(1, int(bar_width * min(1.0, value / STAT_FULL)))
-                tk.Frame(track, bg=self._stat_color(value), width=filled,
-                         height=int(7 * scale)).place(x=0, y=0, relheight=1.0)
-                tk.Label(grid, text=str(value), bg=BG_TIP, fg=FG_VALUE, anchor="e",
-                         font=font(8), width=4).grid(row=row, column=2, sticky="e")
-            total = sum(int(v) for v in base.values())
-            tk.Label(grid, text="Total", bg=BG_TIP, fg=FG_REGION, anchor="w",
-                     font=font(8, "bold"), width=7).grid(row=len(STAT_ORDER), column=0,
-                                                         sticky="w", pady=(int(3 * scale), 0))
-            tk.Label(grid, text=str(total), bg=BG_TIP, fg=FG_VALUE, anchor="e",
-                     font=font(8, "bold"), width=4).grid(row=len(STAT_ORDER), column=2,
-                                                          sticky="e", pady=(int(3 * scale), 0))
-
-        # -- specifique aux alphas : leur capacite est figee, et c'est souvent
-        # ce qui fait leur interet.
-        alpha = self._alpha_details(english)
-        if alpha and alpha.get("ability"):
-            block = tk.Frame(body, bg=BG_TIP)
-            block.pack(anchor="w", fill="x", pady=(int(8 * scale), 0))
-            tk.Frame(block, bg="#2a3140", height=1).pack(fill="x",
-                                                         pady=(0, int(6 * scale)))
-            line = tk.Frame(block, bg=BG_TIP)
-            line.pack(anchor="w")
-            # Meme ton que les libelles de stats : c'en est un de plus.
-            tk.Label(line, text="Capacité  ", bg=BG_TIP, fg=FG_REGION,
-                     font=font(8)).pack(side="left")
-            tk.Label(line, text=self.widget._ability(alpha["ability"]), bg=BG_TIP,
-                     fg=KIND_COLOR["alpha"], font=font(9, "bold")).pack(side="left")
-
-        self.reposition()
-
-    def _alpha_details(self, english: str) -> dict | None:
-        """Capacite et attaques, uniquement si l'evenement affiche est un alpha.
-
-        Ces champs n'existent que pour les alphas chez Alphapedia : 310 entrees
-        alpha sur 310 les portent, 0 sur 797 entrees d'essaims.
-        """
-        entry = self.origin
-        if not entry or entry.get("kind") != "alpha":
-            return None
-        key = "|".join((normalize(english), normalize(entry.get("region", "")),
-                        normalize(entry.get("location", ""))))
-        found = self.widget.alpha_data.get(key)
-        if found:
-            return found
-        # Le lieu annonce peut differer de celui du catalogue. On ne se rabat
-        # sur l'espece seule que si elle n'a QU'UNE apparition connue : deux
-        # spawns d'une meme espece ont des attaques differentes, et afficher
-        # celles du mauvais serait pire que de ne rien montrer.
-        prefix = normalize(english) + "|"
-        matches = [value for candidate, value in self.widget.alpha_data.items()
-                   if candidate.startswith(prefix)]
-        return matches[0] if len(matches) == 1 else None
-
-    @staticmethod
-    def _stat_color(value: int) -> str:
-        if value >= 120:
-            return "#3ddc84"
-        if value >= 90:
-            return "#8bd450"
-        if value >= 60:
-            return "#e0c341"
-        if value >= 40:
-            return "#e08f41"
-        return "#d1594f"
-
-    def reposition(self) -> None:
-        """Accole le panneau au widget, du cote ou il y a le plus de place.
-
-        Appele aussi pendant le deplacement du widget, pour que le panneau le
-        suive au lieu de rester en arriere.
-        """
-        panel = self.window
-        if panel is None:
-            return
-        root = self.widget.root
-        root.update_idletasks()
-        panel.update_idletasks()
-
-        main_x, main_y = root.winfo_rootx(), root.winfo_rooty()
-        main_w, main_h = root.winfo_width(), root.winfo_height()
-        panel_w = panel.winfo_reqwidth()
-
-        # Bornes de l'ECRAN OU SE TROUVE LE WIDGET, et non de l'ecran principal :
-        # sur un second moniteur, un calcul base sur winfo_screenwidth() place le
-        # panneau hors champ.
-        left, top, right, bottom = monitor_work_area(self.widget.hwnd or root.winfo_id())
-
-        room_right = right - (main_x + main_w)
-        room_left = main_x - left
-        if room_right >= panel_w + self.GAP or room_right >= room_left:
-            x = main_x + main_w + self.GAP
-        else:
-            x = main_x - panel_w - self.GAP
-        x = max(left, min(x, right - panel_w))
-        y = max(top, min(main_y, bottom - main_h))
-        # Meme hauteur que le widget principal, alignee sur son sommet.
-        panel.geometry(f"{panel_w}x{main_h}+{x}+{y}")
+def stat_color(value: int) -> str:
+    """Couleur d'une jauge de statistique, du rouge au vert."""
+    if value >= 120:
+        return "#3ddc84"
+    if value >= 90:
+        return "#8bd450"
+    if value >= 60:
+        return "#e0c341"
+    if value >= 40:
+        return "#e08f41"
+    return "#d1594f"
 
 
 class PokedexPanel:
@@ -1205,6 +980,8 @@ class PokedexPanel:
         self.entry = None
         self.content = None
         self.current = None
+        self.origin = None      # evenement d'ou vient l'espece, s'il y en a un
+        self.alpha_mode = False
         self.history = []       # especes vues avant, pour le retour en arriere
         self.images = []        # references gardees : sinon Tk vide les images
 
@@ -1214,6 +991,25 @@ class PokedexPanel:
         else:
             self.show()
 
+    def open_for(self, english: str, entry: dict | None = None) -> None:
+        """Ouvre le Pokedex sur une espece, depuis une ligne du widget.
+
+        Un second clic sur la meme espece referme, comme le faisait la fiche
+        qu'il remplace. Un alpha s'ouvre directement en mode alpha : c'est sa
+        capacite figee qui interesse.
+        """
+        if self.window is not None and self.current == english:
+            self.close()
+            return
+        if self.window is None:
+            self.show()
+        self.origin = entry
+        self.alpha_mode = bool(entry and entry.get("kind") == "alpha")
+        self.history = []
+        if self.query is not None:
+            self.query.set("")
+        self._select(english, remember=False)
+
     def close(self) -> None:
         if self.window is not None:
             self.window.destroy()
@@ -1222,6 +1018,8 @@ class PokedexPanel:
         self.query = None
         self.entry = None
         self.current = None
+        self.origin = None
+        self.alpha_mode = False
         self.history = []
         self.images = []
 
@@ -1230,8 +1028,6 @@ class PokedexPanel:
 
     def show(self) -> None:
         scale = self.widget.scale
-        # Meme emplacement que la fiche Pokemon : l'un chasse l'autre.
-        self.widget.panel.close()
         panel = tk.Toplevel(self.widget.root)
         panel.overrideredirect(True)
         panel.attributes("-topmost", self.widget.pin == "top")
@@ -1338,10 +1134,37 @@ class PokedexPanel:
             cible.bind("<Enter>", lambda _e, l=nom: l.configure(fg=FG_HOVER))
             cible.bind("<Leave>", lambda _e, l=nom: l.configure(fg=FG_LOCATION))
 
+    def alpha_ability(self, english: str) -> str | None:
+        """Capacite figee de l'alpha de cette espece, si elle en a une.
+
+        L'evenement d'origine donne la cle exacte quand il y en a un. Sinon on
+        se contente de l'espece : verifie sur les 310 entrees d'Alphapedia,
+        AUCUNE espece n'a de capacite divergente d'une apparition a l'autre.
+        Ce sont les ATTAQUES qui different — 96 especes sur 141 — mais le
+        panneau ne les affiche pas.
+        """
+        donnees = self.widget.alpha_data
+        entry = self.origin
+        if entry:
+            cle = "|".join((normalize(english), normalize(entry.get("region", "")),
+                            normalize(entry.get("location", ""))))
+            exact = donnees.get(cle)
+            if exact and exact.get("ability"):
+                return exact["ability"]
+        prefixe = normalize(english) + "|"
+        for candidat, valeur in donnees.items():
+            if candidat.startswith(prefixe) and valeur.get("ability"):
+                return valeur["ability"]
+        return None
+
     def _select(self, english: str, remember: bool = True) -> None:
         """Affiche une espece. `remember` empile la precedente pour le retour."""
         if remember and self.current and self.current != english:
             self.history.append(self.current)
+            # On change d'espece : le contexte de l'evenement ne la concerne
+            # plus, et son mode alpha non plus.
+            self.origin = None
+            self.alpha_mode = False
         self.current = english
         self._render_result(english)
         # Le clic a emporte le focus sur une etiquette : sans ce rappel, taper
@@ -1350,6 +1173,13 @@ class PokedexPanel:
         if self.entry is not None:
             self.entry.focus_set()
         self.reposition()
+
+    def _toggle_alpha(self) -> None:
+        """Bascule l'affichage alpha : sprite auréolé et capacité figée."""
+        self.alpha_mode = not self.alpha_mode
+        if self.current:
+            self._render_result(self.current)
+            self.reposition()
 
     def _back(self) -> None:
         """Revient a l'espece precedente, ou a la liste des suggestions."""
@@ -1391,8 +1221,31 @@ class PokedexPanel:
                  font=self._font(11, "bold")).pack(side="left")
         tk.Label(entete, text=f"  #{info.get('id', 0):03d}", bg=BG_TIP, fg=FG_REGION,
                  font=self._font(8, "bold")).pack(side="left")
+        lien = tk.Label(entete, text=" ↗", bg=BG_TIP, fg=FG_LINK,
+                        font=self._font(9, "bold"), cursor="hand2")
+        lien.pack(side="left")
+        adresse = POKEDEX_URL.format(dex=info.get("id", 0))
+        lien.bind("<Button-1>", lambda _e: webbrowser.open(adresse))
+        lien.bind("<Enter>", lambda _e: lien.configure(fg=FG_HOVER))
+        lien.bind("<Leave>", lambda _e: lien.configure(fg=FG_LINK))
 
-        art = self.widget.artwork(english, (int(76 * scale), int(66 * scale)))
+        # Carte annotee du lieu : seulement quand l'espece vient d'un evenement,
+        # une carte n'ayant de sens que rapportee a un lieu precis.
+        carte = (self.widget.map_for(self.origin.get("region", ""),
+                                     self.origin.get("location", ""))
+                 if self.origin else None)
+        if carte:
+            atlas = tk.Label(entete, text=" 🗺", bg=BG_TIP, fg=FG_LINK,
+                             font=self._font(9, "bold"), cursor="hand2")
+            atlas.pack(side="left")
+            lieu = self.origin.get("location", "")
+            atlas.bind("<Button-1>",
+                       lambda _e, c=carte, t=lieu: self.widget.show_map(c, t))
+            atlas.bind("<Enter>", lambda _e: atlas.configure(fg=FG_HOVER))
+            atlas.bind("<Leave>", lambda _e: atlas.configure(fg=FG_LINK))
+
+        art = self.widget.artwork(english, (int(76 * scale), int(66 * scale)),
+                                  alpha=self.alpha_mode)
         if art is not None:
             self.images.append(art)
             support = tk.Label(gauche, image=art, bg=BG_TIP)
@@ -1400,6 +1253,15 @@ class PokedexPanel:
 
         etiquettes = tk.Frame(gauche, bg=BG_TIP)
         etiquettes.pack(anchor="w", pady=(int(4 * scale), 0))
+        rang = (None if self.widget.rarity == "none"
+                else self.widget._tier_of(english, {}))
+        if rang is not None:
+            points = self.widget.tier_points.get(rang)
+            libelle = f"T{rang}" + (f" · {points} pts" if points else "")
+            tk.Label(etiquettes, text=f" {libelle} ",
+                     bg=TIER_COLORS.get(rang, FG_TIMER), fg="#12151c",
+                     font=self._font(8, "bold")).pack(side="left",
+                                                      padx=(0, int(5 * scale)))
         for kind in info.get("types") or []:
             tk.Label(etiquettes, text=f" {TYPE_FR.get(kind, kind)} ",
                      bg=TYPE_COLORS.get(kind, FG_TIMER), fg="#12151c",
@@ -1418,7 +1280,7 @@ class PokedexPanel:
             piste.grid(row=rang, column=1, padx=(0, int(6 * scale)), pady=int(1 * scale))
             piste.pack_propagate(False)
             rempli = max(1, int(largeur * min(1.0, valeur / STAT_FULL)))
-            tk.Frame(piste, bg=DetailPanel._stat_color(valeur), width=rempli,
+            tk.Frame(piste, bg=stat_color(valeur), width=rempli,
                      height=int(6 * scale)).place(x=0, y=0, relheight=1.0)
             tk.Label(grille, text=str(valeur), bg=BG_TIP, fg=FG_VALUE, anchor="e",
                      font=self._font(8), width=4).grid(row=rang, column=2, sticky="e")
@@ -1431,12 +1293,35 @@ class PokedexPanel:
                      font=self._font(8, "bold"), width=4).grid(
                          row=len(STAT_ORDER), column=2, sticky="e")
 
+        # -- bascule alpha : la capacite figee est ce qui fait leur interet
+        capacite = self.alpha_ability(english)
+        if capacite:
+            bloc = tk.Frame(gauche, bg=BG_TIP)
+            bloc.pack(anchor="w", fill="x", pady=(int(5 * scale), 0))
+            tk.Frame(bloc, bg="#2a3140", height=1).pack(fill="x",
+                                                        pady=(0, int(4 * scale)))
+            # Badge et capacite sur UNE ligne : empiles, ils reclamaient 353 px
+            # pour les 337 du widget, et la capacite passait sous le bord.
+            ligne = tk.Frame(bloc, bg=BG_TIP)
+            ligne.pack(anchor="w")
+            bouton = tk.Label(
+                ligne, text=" ALPHA " if self.alpha_mode else " voir l'alpha ",
+                bg=KIND_COLOR["alpha"] if self.alpha_mode else "#252c39",
+                fg="#12151c" if self.alpha_mode else FG_LINK,
+                font=self._font(8, "bold"), cursor="hand2")
+            bouton.pack(side="left")
+            bouton.bind("<Button-1>", lambda _e: self._toggle_alpha())
+            if self.alpha_mode:
+                tk.Label(ligne, text=f"  {self.widget._ability(capacite)}",
+                         bg=BG_TIP, fg=KIND_COLOR["alpha"],
+                         font=self._font(9, "bold")).pack(side="left")
+
         # -- colonne droite : faiblesses puis contres
         types = info.get("types") or []
         tk.Label(droite, text="FAIBLE CONTRE", bg=BG_TIP, fg=FG_TITLE,
                  font=self._font(8, "bold")).pack(anchor="w")
         faiblesses = tk.Frame(droite, bg=BG_TIP)
-        faiblesses.pack(anchor="w", pady=(int(3 * scale), 0))
+        faiblesses.pack(anchor="w", pady=(int(2 * scale), 0))
         trouvees = type_weaknesses(types)
         if not trouvees:
             # Spectre/Tenebres n'a aucune faiblesse en cinquieme generation :
@@ -1450,11 +1335,11 @@ class PokedexPanel:
                      bg=TYPE_COLORS.get(kind, FG_TIMER), fg="#12151c",
                      font=self._font(8, "bold")).grid(row=index // 3, column=index % 3,
                                                       padx=(0, int(4 * scale)),
-                                                      pady=int(2 * scale), sticky="w")
+                                                      pady=int(1 * scale), sticky="w")
 
         tk.Label(droite, text="MEILLEURS CONTRES", bg=BG_TIP, fg=FG_TITLE,
                  font=self._font(8, "bold")).pack(anchor="w",
-                                                  pady=(int(9 * scale), 0))
+                                                  pady=(int(6 * scale), 0))
         liste = tk.Frame(droite, bg=BG_TIP)
         liste.pack(anchor="w", pady=(int(2 * scale), 0))
         contres = best_counters(self.widget.table, english, self.MAX_COUNTERS)
@@ -1464,30 +1349,38 @@ class PokedexPanel:
                                  "les espèces frappant en super-efficace.",
                      bg=BG_TIP, fg=FG_TIMER, justify="left",
                      font=self._font(8)).pack(anchor="w")
-        for rang, (_score, donne, recoit, nom) in enumerate(contres):
-            ligne = tk.Frame(liste, bg=BG_TIP, cursor="hand2")
-            ligne.pack(anchor="w", pady=int(1 * scale))
+        # Tableau invisible plutot qu'une ligne par contre : en pack(), chaque
+        # rangee se calait sur la largeur de son propre nom, si bien que les
+        # coefficients ne s'alignaient ni entre eux, ni sous leur libelle. La
+        # grille leur donne deux colonnes propres et pose l'en-tete dessus.
+        if contres:
+            tk.Label(liste, text="inflige", bg=BG_TIP, fg=FG_EMPTY,
+                     font=self._font(7)).grid(row=0, column=2, sticky="e",
+                                              padx=(int(6 * scale), 0))
+            tk.Label(liste, text="encaisse", bg=BG_TIP, fg=FG_EMPTY,
+                     font=self._font(7)).grid(row=0, column=3, sticky="e",
+                                              padx=(int(5 * scale), 0))
+        for rang, (_score, donne, recoit, nom) in enumerate(contres, start=1):
             sprite = self.widget._sprite(nom)
             if sprite is not None:
                 self.images.append(sprite)
-            icone = tk.Label(ligne, image=sprite, bg=BG_TIP)
-            icone.pack(side="left")
-            libelle = tk.Label(ligne, text=self.widget._label(nom), bg=BG_TIP,
-                               fg=FG_VALUE, font=self._font(8, "bold"), anchor="w",
-                               width=13)
-            libelle.pack(side="left")
-            tk.Label(ligne, text=f"×{donne:g}", bg=BG_TIP, fg="#3ddc84",
-                     font=self._font(8, "bold"), width=4).pack(side="left")
-            tk.Label(ligne, text=f"×{recoit:g}", bg=BG_TIP,
+            icone = tk.Label(liste, image=sprite, bg=BG_TIP, cursor="hand2")
+            icone.grid(row=rang, column=0, sticky="w")
+            libelle = tk.Label(liste, text=self.widget._label(nom), bg=BG_TIP,
+                               fg=FG_VALUE, font=self._font(8, "bold"),
+                               anchor="w", width=13, cursor="hand2")
+            libelle.grid(row=rang, column=1, sticky="w")
+            tk.Label(liste, text=f"×{donne:g}", bg=BG_TIP, fg="#3ddc84",
+                     font=self._font(8, "bold"), anchor="e").grid(
+                         row=rang, column=2, sticky="e", padx=(int(6 * scale), 0))
+            tk.Label(liste, text=f"×{recoit:g}", bg=BG_TIP,
                      fg="#d1594f" if recoit > 1 else FG_REGION,
-                     font=self._font(8), width=5).pack(side="left")
-            for cible in (ligne, icone, libelle):
+                     font=self._font(8), anchor="e").grid(
+                         row=rang, column=3, sticky="e", padx=(int(5 * scale), 0))
+            for cible in (icone, libelle):
                 cible.bind("<Button-1>", lambda _e, n=nom: self._select(n))
                 cible.bind("<Enter>", lambda _e, l=libelle: l.configure(fg=FG_HOVER))
                 cible.bind("<Leave>", lambda _e, l=libelle: l.configure(fg=FG_VALUE))
-        if contres:
-            tk.Label(droite, text="inflige / encaisse", bg=BG_TIP, fg=FG_EMPTY,
-                     font=self._font(7)).pack(anchor="w", pady=(int(3 * scale), 0))
 
     # -- placement ----------------------------------------------------------
 
@@ -1543,7 +1436,6 @@ class SwarmWidget:
         self.art = {}   # grandes images du panneau, gardees en reference
         self.glow_step = 0
         self.glow_last = (None, None)
-        self.panel = DetailPanel(self)
         self.pokedex = PokedexPanel(self)
         # Cris : muet au lancement, volume repris de la derniere session.
         # _load_state() ajustera le volume avant que le thread ne serve.
@@ -2268,7 +2160,6 @@ class SwarmWidget:
         self._place()
         self._save_state()
         # Panneaux et carte restent accoles au widget pendant le deplacement.
-        self.panel.reposition()
         self.pokedex.reposition()
         self.place_map()
 
@@ -2514,7 +2405,7 @@ class SwarmWidget:
         self.scale = scale
         self.cell = (max(8, int(round(SPRITE_CELL[0] * scale * self.sprite_scale))),
                      max(8, int(round(SPRITE_CELL[1] * scale * self.sprite_scale))))
-        self.panel.close()
+        self.pokedex.close()
         if self.map_window is not None:
             self.map_window.destroy()
             self.map_window = None
@@ -2561,7 +2452,7 @@ class SwarmWidget:
         widgets = slots[index]
         english = widgets.get("species")
         if english:
-            self.panel.toggle(english, widgets.get("entry"))
+            self.pokedex.open_for(english, widgets.get("entry"))
 
     def _hover_place(self, region: str, index: int, entering: bool) -> None:
         """Accentue le lieu survole, independamment du nom."""

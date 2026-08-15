@@ -35,8 +35,8 @@ statistiques ainsi que par quoi la battre.
 - Chaque contre affiche **ce qu'il inflige et ce qu'il encaisse** : `×4 / ×0.5`
   se lit « frappe quatre fois plus fort, ne subit que la moitié ».
 
-Le panneau est **plus large** que la fiche Pokédex ordinaire — deux colonnes y
-tiennent — mais sa **hauteur reste celle du widget**, comme tous les panneaux.
+Le panneau est **plus large** que les autres — deux colonnes y tiennent — mais
+sa **hauteur reste celle du widget**, comme eux.
 C'est pourquoi la recherche et le résultat occupent la même zone plutôt que de
 s'empiler : les trois ensemble déborderaient.
 
@@ -64,31 +64,36 @@ Un clic bascule, tout comme l'entrée correspondante du menu de l'icône systèm
 - **Le volume est retenu**, pas le silence : le widget redémarre muet mais
   retrouve le niveau choisi quand on le rétablit.
 
-## La fiche Pokédex
+## La fiche d'une espèce
 
 **Survol** du sprite ou du nom : le nom passe en bleu clair et le sprite grossit
 d'environ 20 %. La marge est prévue dès le départ — au repos le sprite n'occupe
 que 85 % de sa cellule — pour qu'il grossisse **sans bousculer la mise en page**.
 
-**Clic** : un panneau s'ouvre **accolé au widget**, du côté où il y a le plus de
-place, à la même hauteur et aligné sur son sommet. Il suit le widget quand on le
-déplace. Un nouveau clic sur le même Pokémon le referme, tout comme la croix.
+**Clic** : le [Pokédex](#le-pokédex-de-recherche) s'ouvre sur cette espèce. Un
+second clic sur le même Pokémon referme le panneau.
+
+Il n'y a plus qu'un seul panneau d'information : cliquer une ligne et chercher
+un nom mènent au même endroit, avec les mêmes stats et les mêmes contres. La
+fiche séparée qui existait auparavant faisait double emploi, sans les contres.
 
 | Élément | Détail |
 |---|---|
 | Nom et n° | nom localisé + numéro, suivi de **↗** qui ouvre la fiche en ligne |
-| **Grande image** | sprite de face 96×96, rogné et mis à l'échelle |
+| **🗺** | carte annotée du lieu, quand l'espèce vient d'un essaim et qu'une carte existe |
 | **Rareté** | rang et barème, sur fond coloré selon le tier |
 | **Types** | étiquettes traduites, sur fond de la couleur du type |
 | **Stats de base** | six jauges (PV, Att, Déf, Att.Spé, Déf.Spé, Vit) + total |
-| **Capacité** *(alphas seulement)* | la capacité figée de cet alpha, en rouge |
-
-Le lien est une simple icône **↗** posée à côté du numéro : en bas de panneau, un
-libellé texte se faisait couper quand le widget était court.
+| **voir l'alpha** | dévoile la capacité figée et cercle le sprite de rouge |
 
 Les jauges se remplissent par rapport à **180** et non au maximum absolu (255) :
 au-delà de 180 une stat est déjà exceptionnelle, et calibrer sur 255 écraserait
 visuellement tout le reste.
+
+**Cliquer un alpha ouvre directement en mode alpha** : c'est sa capacité figée
+qui fait son intérêt. Pour une espèce trouvée par la recherche, le bouton
+*voir l'alpha* n'apparaît que si elle est un alpha connu — Caninos, par exemple,
+n'en est pas un.
 
 > Les 18 types sont traduits et colorés localement : Alphapedia ne publie pas de
 > table de traduction pour eux (404 sur `type-fr.json`), et ces valeurs ne

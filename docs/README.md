@@ -6,7 +6,7 @@ les données, et comment les ressources sont fabriquées.
 
 | Page | Contenu |
 |---|---|
-| [L'interface en détail](interface.md) | pastille d'état, fiche Pokédex, cartes de région et cartes annotées, ce qui change pour un alpha, halo et transparence, menu de l'icône système |
+| [L'interface en détail](interface.md) | pastille d'état, Pokédex de recherche, cartes, cri du Pokémon, ce qui change pour un alpha, halo et transparence, menu de l'icône système |
 | [Les flux de données](donnees.md) | les deux flux ntfy, configurer son propre topic, essaims contre alphas, durée d'un essaim, format réel d'Alphapedia, fiabilité et latence mesurées |
 | [Sous le capot](sous-le-capot.md) | noms, sprites, raretés et cartes : d'où ils viennent et comment ils sont construits ; rognage des sprites, halo des alphas, reconstitution des cartes de région, et pourquoi pas l'interception réseau |
 

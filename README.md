@@ -30,7 +30,7 @@ dans un petit panneau toujours visible, que le jeu tourne ou non.
 | **Sans lancer le jeu** | les données viennent du flux public d'Alphapedia, pas du client |
 | **Compte à rebours à la seconde** | `hh:mm:ss`, qui sert aussi de témoin de vie |
 | **Noms français** | Pokémon *et* lieux, depuis les tables d'Alphapedia |
-| **Fiche Pokédex** | rareté, types colorés, six jauges de statistiques, capacité figée des alphas |
+| **Fiche d'une espèce** | rareté, types colorés, six jauges, capacité figée des alphas — dans le Pokédex |
 | **Cartes de région** | 486 lieux repérés sur les cartes officielles, plus 49 cartes annotées par la communauté |
 | **Alphas signalés** | badge rouge, sprite cerclé de rouge, halo pulsant autour du widget |
 | **Cri du Pokémon** | joué une fois à chaque nouvelle apparition — **muet par défaut**, volume réglable et retenu |
@@ -123,7 +123,7 @@ droit administrateur. Pour désactiver : `install_startup.ps1 -Remove`.
 | Geste | Effet |
 |---|---|
 | Survol d'un sprite ou d'un nom | le sprite grossit, le nom s'accentue |
-| Clic sur le **sprite** ou le **nom** | ouvre la fiche Pokédex ; un second clic la referme |
+| Clic sur le **sprite** ou le **nom** | ouvre le Pokédex sur cette espèce ; un second clic le referme |
 | Clic sur le **nom du lieu** | ouvre la carte de la région ; un second clic la referme |
 | Clic sur le **repère** de la carte | bascule sur la carte annotée de la communauté, avec **←** pour revenir |
 | **Double-clic** sur la carte | agrandit, ou revient à la taille normale |
@@ -146,7 +146,7 @@ Le détail vit dans [`docs/`](docs/) :
 
 | Page | Contenu |
 |---|---|
-| [**L'interface en détail**](docs/interface.md) | fiche Pokédex, cartes de région et cartes annotées, ce qui change pour un alpha, halo et transparence, menu de l'icône système |
+| [**L'interface en détail**](docs/interface.md) | Pokédex de recherche, cartes de région et cartes annotées, cri du Pokémon, halo et transparence, menu de l'icône système |
 | [**Les flux de données**](docs/donnees.md) | les deux flux ntfy, configurer son propre topic, essaims contre alphas, durée d'un essaim, format réel d'Alphapedia et fiabilité mesurée |
 | [**Sous le capot**](docs/sous-le-capot.md) | d'où viennent noms, sprites, raretés et cartes ; rognage des sprites, halo des alphas, reconstitution des cartes de région |
 
